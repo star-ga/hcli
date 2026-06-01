@@ -1,0 +1,114 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "Historia Clínica Reproducibility Manifest",
+  "version": "1.0.0",
+  "dateCreated": "2026-05-11T14:09:37.591565+00:00",
+  "license": "Apache-2.0",
+  "description": "Content-addressed snapshot of every load-bearing deterministic artifact in Historia Clínica. Un auditor del Ministerio de Sanidad (o una compuerta de CI) verifies all eight artifacts + four gate verdicts + flow plan hashes by checking this single file. Re-run `scripts/build_reproducibility_manifest.py --check` to verify the on-disk manifest matches the live computation.",
+  "git_head": "764dff5b09b48388d32e47a1db56f17eb3c4877f",
+  "artifacts": {
+    "openevidence_cache": {
+      "path": "docs/openevidence_cache.json",
+      "sha256": "e625dd557f9ff5973ec0f59fdc801f8468094fda288908dc8e31f5a0accf6dbb",
+      "entry_count": 139,
+      "per_class_counts": {
+        "serious": 69,
+        "contraindicated": 44,
+        "moderate": 22,
+        "major": 4
+      }
+    },
+    "bitnet_weights": {
+      "path": "engine/bitnet_weights.json",
+      "sha256": "f7f67afddcf03949a42a56ba913579fba268f1b12f5ef1633c34d043979ca483",
+      "bundle_id": "1f0f88591c05af57c62d844b667639b29c7d1f0eb1b213073d158101611f76e6",
+      "param_count": "unknown"
+    },
+    "bitnet_confusion_matrix": {
+      "path": "docs/bitnet_confusion_matrix.json",
+      "sha256": "2cea8c0c9274a679711bb6c9a1b6ece68563028b291e1b3e40652a0ef73fb2b7",
+      "safety_invariants": {
+        "fp_contraindicated_is_zero": true,
+        "tp_contraindicated_at_least_seven": true
+      },
+      "cache_pairs_total": 139
+    },
+    "cohort_coverage_matrix": {
+      "path": "docs/cohort_coverage_matrix.md",
+      "sha256": "bd9abd7bf9b79015683444f3915591f3ad572950f2601566f4f80720eba6c554"
+    },
+    "synthea_demo_cohort": {
+      "path": "docs/synthea_demo_cohort.json",
+      "sha256": "c9548b48e8be53b15196906aec5e11f7202d2457155314883792d33734f2f5b3",
+      "patient_count": 30,
+      "practitioner_count": 47,
+      "entry_count": 239
+    },
+    "bitnet_calibration": {
+      "path": "docs/bitnet_calibration.json",
+      "sha256": "994652748ab413e5092528667774a25ea9158c134838eb316a76814463ccbc14",
+      "weights_id": "1f0f88591c05af57c62d844b667639b29c7d1f0eb1b213073d158101611f76e6",
+      "total_pairs": 139,
+      "contraindicated_recall": 1.0
+    },
+    "audit_replay_pins": {
+      "path": "docs/audit_replay_pins.json",
+      "sha256": "a769569fcc48e6e3f82f46e445ff547786755162e396a1fe31c1285f4c60ed2f",
+      "bundle_id": "1f0f88591c05af57c62d844b667639b29c7d1f0eb1b213073d158101611f76e6",
+      "pair_count": 47
+    },
+    "pharmacology_flags": {
+      "path": "docs/pharmacology_flags.json",
+      "sha256": "fa28ba434398e3f64f49f41044867e6d2a4caac993cb043b3d6fa32f4550c0c8",
+      "drug_count": 126,
+      "flag_keys": [
+        "is_cyp3a4_strong_inhibitor",
+        "is_cyp3a4_substrate",
+        "is_cyp2c9_inhibitor",
+        "is_cyp2d6_inhibitor",
+        "is_p_gp_inhibitor",
+        "is_p_gp_substrate",
+        "is_oatp1b1_inhibitor",
+        "is_statin",
+        "is_anticoagulant",
+        "is_maoi",
+        "is_serotonergic",
+        "is_nsaid",
+        "is_pde5_inhibitor",
+        "is_iodinated_contrast",
+        "is_metformin",
+        "is_renal_state",
+        "is_cyp1a2_inhibitor",
+        "is_cyp1a2_substrate",
+        "is_xanthine_oxidase_inhibitor",
+        "is_thiopurine",
+        "is_folate_antagonist",
+        "is_tetracycline",
+        "is_retinoid",
+        "is_ace_inhibitor",
+        "is_neprilysin_inhibitor",
+        "is_cyp3a4_moderate_inhibitor"
+      ],
+      "schema_version": "v1"
+    },
+    "flow_plan_hashes": {
+      "AllergyCrossReactivity": "272d3692b73aae490580dc6675ae905d3648697c435807436dc54e6c0ac786db",
+      "ClinicalTrialMatch": "675abe773fa6f012c57a56f9b16cef2b5824d719beabbc2826bfeb1c8e348cdc",
+      "JointMemoryFederation": "5eb5c557bd23bee6d55f336cb1b20af28da378dec099cc9610d0fc70a73add62",
+      "LabContraindication": "0f327e251bcc3fe2912a0bcf5287d4cdd641043c5433e36fe358b65941fdc970",
+      "MedicationSafetyReview": "4a703dd3388f2997dbece895fb2ecd4580d0fc212f080f3e467e2a1109054be6",
+      "ProviderDisagreement": "a24f13b553ad8f6e228215dc5abf0a90057a8b8384d0a01c5c3abd59f7fb078f",
+      "WhatIfSimulation": "dabcf5790ac62d5778371662114abc331d1d857141002103f113f82549713058"
+    }
+  },
+  "gates": {
+    "regression_recall": "PASS",
+    "negative_control_precision": "PASS",
+    "federation_invariant": "PASS",
+    "arch_mind_l1": "PASS",
+    "audit_replay": "PASS"
+  },
+  "test_count": 1425,
+  "audit_replay_hint": "To verify: (1) check git_head matches the auditor's expected commit, (2) recompute SHA-256 of every artifact path and compare, (3) recompute flow plan_hashes via engine.flow_runner.compute_plan_hash, (4) re-run the four gate scripts, (5) run pytest tests/test_engine tests/test_scripts and confirm test_count is at or above the manifested value."
+}

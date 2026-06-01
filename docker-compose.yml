@@ -1,0 +1,31 @@
+services:
+  mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.mcp
+    ports:
+      - "8081:8080"
+    environment:
+      - PORT=8080
+      - DEMO_MODE=true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8080/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  a2a-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.a2a
+    ports:
+      - "8082:8080"
+    environment:
+      - PORT=8080
+      - DEMO_MODE=true
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8080/.well-known/agent-card.json')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

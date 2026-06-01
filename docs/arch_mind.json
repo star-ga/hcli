@@ -1,0 +1,110 @@
+{
+  "rules": [
+    {
+      "metric": "acyclicity_q16",
+      "operator": "eq",
+      "const_name": "NO_CYCLES",
+      "floor": 10000,
+      "current_q16": 655360000,
+      "current_raw": 10000,
+      "passes": true,
+      "label": "Acyclicity",
+      "blurb": "Engine\u2192consensus\u2192synthesis must remain a DAG; a cycle would break the audit-chain replay contract."
+    },
+    {
+      "metric": "redundancy_q16",
+      "operator": "ge",
+      "const_name": "REDUNDANCY_FLOOR",
+      "floor": 9500,
+      "current_q16": 648413184,
+      "current_raw": 9894,
+      "passes": true,
+      "label": "Redundancy",
+      "blurb": "Bounded duplicate-pattern density across the engine surface."
+    },
+    {
+      "metric": "q16_determinism_purity",
+      "operator": "ge",
+      "const_name": "PURITY_FLOOR",
+      "floor": 6000,
+      "current_q16": 481882352,
+      "current_raw": 7352,
+      "passes": true,
+      "label": "Determinism Purity",
+      "blurb": "Q16.16 fixed-point share of the engine surface; load-bearing for the BitNet b1.58 reproducibility layer."
+    },
+    {
+      "metric": "equality_q16",
+      "operator": "ge",
+      "const_name": "EQUALITY_FLOOR",
+      "floor": 4000,
+      "current_q16": 327179344,
+      "current_raw": 4992,
+      "passes": true,
+      "label": "Equality",
+      "blurb": "Symbol-count balance across modules; flags concentration drift."
+    },
+    {
+      "metric": "depth_q16",
+      "operator": "ge",
+      "const_name": "DEPTH_FLOOR",
+      "floor": 5000,
+      "current_q16": 393216000,
+      "current_raw": 6000,
+      "passes": true,
+      "label": "Depth",
+      "blurb": "Pipeline depth bounded; no over-deep dispatch chains."
+    },
+    {
+      "metric": "modularity_q16",
+      "operator": "ge",
+      "const_name": "MODULARITY_FLOOR",
+      "floor": 6000,
+      "current_q16": 436906666,
+      "current_raw": 6666,
+      "passes": true,
+      "label": "Modularity",
+      "blurb": "engine/ + mcp_server/ + a2a_agent/ inter-package separation."
+    },
+    {
+      "metric": "governance_kernel_coverage",
+      "operator": "ge",
+      "const_name": "GOVERNANCE_FLOOR",
+      "floor": 0,
+      "current_q16": 0,
+      "current_raw": 0,
+      "passes": true,
+      "label": "Governance Coverage",
+      "blurb": "[protection]/[invariant] decoration count (MIND-side; Python repo today)."
+    },
+    {
+      "metric": "mcp_tool_isolation",
+      "operator": "ge",
+      "const_name": "MCP_ISOLATION_FLOOR",
+      "floor": 9500,
+      "current_q16": 629145600,
+      "current_raw": 9600,
+      "passes": true,
+      "label": "MCP Tool Isolation",
+      "blurb": "One-tool-per-public-surface contract across 18 SHARP-on-MCP + 13 A2A skills."
+    },
+    {
+      "metric": "evidence_chain_density",
+      "operator": "ge",
+      "const_name": "EVIDENCE_FLOOR",
+      "floor": 0,
+      "current_q16": 26664737,
+      "current_raw": 406,
+      "passes": true,
+      "label": "Evidence Chain Density",
+      "blurb": "Audit-chain emission density per module; current source: TAG_v1 in engine/clinical_memory.py."
+    }
+  ],
+  "rule_count": 9,
+  "pass_count": 9,
+  "all_pass": true,
+  "summary_sha256": "316a55f74f9b8d642c5cdcfb77d1d2c35f0197d1035b6f3129fd60472aa0c5bd",
+  "rules_sha256": "ba777f153180642ac73ce19b8169556aa54054e128d186a7bf25e6f8727493c8",
+  "summary_path": ".arch-mind/last_summary.json",
+  "rules_path": ".arch-mind/rules.mind"
+}

@@ -1,0 +1,460 @@
+[
+  {
+    "name": "AllergyCrossReactivity",
+    "plan_hash": "272d3692b73aae490580dc6675ae905d3648697c435807436dc54e6c0ac786db",
+    "profile": "regulated_online",
+    "kernel": "",
+    "inputs": [
+      {
+        "name": "patient_id",
+        "type": "PatientId"
+      },
+      {
+        "name": "medications",
+        "type": "MedicationList"
+      },
+      {
+        "name": "allergies",
+        "type": "AllergyList"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "cross_reacts",
+        "type": "CrossReactivityReport"
+      }
+    ],
+    "nodes": [
+      {
+        "name": "phi",
+        "directive": "@native"
+      },
+      {
+        "name": "med_classes",
+        "directive": "@native"
+      },
+      {
+        "name": "allergy_classes",
+        "directive": "@native"
+      },
+      {
+        "name": "matches",
+        "directive": "@native"
+      },
+      {
+        "name": "scored",
+        "directive": "@native"
+      },
+      {
+        "name": "audit",
+        "directive": "@native"
+      },
+      {
+        "name": "cross_reacts",
+        "directive": "@native"
+      }
+    ],
+    "invariant_count": 3,
+    "invariants": [
+      "phi.safe_for_external == true",
+      "med_classes.coverage_ratio >= 0.90",
+      "allergy_classes.coverage_ratio >= 0.90"
+    ],
+    "source_path": "flows/AllergyCrossReactivity.flow.mind",
+    "source": "// flows/AllergyCrossReactivity.flow.mind\n// Historia Clínica \u2014 SNOMED CT drug-class cross-reactivity check.\n// Apache-2.0 (see LICENSE)\n//\n// Catches prescriptions that cross-react with documented allergies\n// via the 8-class SNOMED CT hierarchy: penicillin, cephalosporin,\n// sulfonamide, fluoroquinolone, opioid, NSAID, ACE inhibitor, statin.\n//\n// Demo case: amoxicillin prescribed for a patient with documented\n// penicillin anaphylaxis \u2192 catch via \u03b2-lactam class hierarchy.\n//\n//     medications + allergies \u2500\u25ba phi_scan \u2500\u25ba snomed_resolve \u2500\u25ba class_match \u2500\u25ba severity_score \u2500\u25ba report\n\n@profile \"regulated_online\"\nflow AllergyCrossReactivity {\n    input  patient_id:    PatientId\n    input  medications:   MedicationList\n    input  allergies:     AllergyList\n    output cross_reacts:  CrossReactivityReport\n\n    node phi = @native phi_scan(medications, allergies)\n    invariant phi.safe_for_external == true\n\n    node med_classes = @native snomed_resolve_drug_classes(medications)\n    node allergy_classes = @native snomed_resolve_allergy_classes(allergies)\n\n    invariant med_classes.coverage_ratio >= 0.90\n    invariant allergy_classes.coverage_ratio >= 0.90\n\n    node matches = @native class_hierarchy_match(med_classes, allergy_classes)\n\n    node scored = @native severity_score(\n        matches:    matches,\n        severity_table: \"snomed_class_cross_reactivity_v1\",\n    )\n\n    node audit = @native emit_audit_chain(\n        plan_hash: $plan_hash,\n        nodes:     [phi, med_classes, allergy_classes, matches, scored],\n        tag:       \"TAG_v1\",\n    )\n\n    assign cross_reacts = @native build_cross_reactivity_report(scored, audit)\n}\n"
+  },
+  {
+    "name": "ClinicalTrialMatch",
+    "plan_hash": "675abe773fa6f012c57a56f9b16cef2b5824d719beabbc2826bfeb1c8e348cdc",
+    "profile": "regulated_online",
+    "kernel": "",
+    "inputs": [
+      {
+        "name": "patient_id",
+        "type": "PatientId"
+      },
+      {
+        "name": "conditions",
+        "type": "ConditionList"
+      },
+      {
+        "name": "demographics",
+        "type": "PatientDemographics"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "matches",
+        "type": "TrialMatchReport"
+      }
+    ],
+    "nodes": [
+      {
+        "name": "phi",
+        "directive": "@native"
+      },
+      {
+        "name": "candidates",
+        "directive": "@native"
+      },
+      {
+        "name": "screened",
+        "directive": "@native"
+      },
+      {
+        "name": "ranked",
+        "directive": "@llm"
+      },
+      {
+        "name": "audit",
+        "directive": "@native"
+      },
+      {
+        "name": "matches",
+        "directive": "@native"
+      }
+    ],
+    "invariant_count": 3,
+    "invariants": [
+      "phi.safe_for_external == true",
+      "screened.fairness_audit_passed == true",
+      "ranked.citations_valid == true"
+    ],
+    "source_path": "flows/ClinicalTrialMatch.flow.mind",
+    "source": "// flows/ClinicalTrialMatch.flow.mind\n// Historia Clínica \u2014 ClinicalTrials.gov eligibility match.\n// Apache-2.0 (see LICENSE)\n//\n// Surfaces active clinical trials matching a patient's condition list\n// and pre-screens eligibility against trial criteria (age, gender,\n// active conditions, exclusion medications).\n//\n//     patient + conditions \u2500\u25ba phi_scan \u2500\u25ba trial_search \u2500\u25ba eligibility_screen \u2500\u25ba rank \u2500\u25ba report\n\n@profile \"regulated_online\"\nflow ClinicalTrialMatch {\n    input  patient_id:   PatientId\n    input  conditions:   ConditionList\n    input  demographics: PatientDemographics\n    output matches:      TrialMatchReport\n\n    node phi = @native phi_scan(conditions, demographics)\n    invariant phi.safe_for_external == true\n\n    // Query ClinicalTrials.gov for active trials matching condition list\n    node candidates = @native search_clinical_trials(\n        conditions:  conditions,\n        status:      \"Recruiting\",\n        country:     \"US\",\n        max_results: 50,\n    )\n\n    // Pre-screen eligibility against age, gender, active conditions,\n    // exclusion medications, and required lab thresholds.\n    node screened = @native eligibility_screen(\n        trials:       candidates,\n        demographics: demographics,\n        conditions:   conditions,\n    )\n    invariant screened.fairness_audit_passed == true   // avoid demographic-bias drift\n\n    // Rank by clinical relevance (LLM-grounded; cites the trial document)\n    node ranked = @llm rank_trial_relevance(\n        trials:    screened,\n        require_citations: true,\n    )\n    invariant ranked.citations_valid == true\n\n    node audit = @native emit_audit_chain(\n        plan_hash: $plan_hash,\n        nodes:     [phi, candidates, screened, ranked],\n        tag:       \"TAG_v1\",\n    )\n\n    assign matches = @native build_trial_match_report(ranked, audit)\n}\n"
+  },
+  {
+    "name": "JointMemoryFederation",
+    "plan_hash": "d96173f3ab818418797abd973b41d9c53858d926917fc97efc78e01b2ec031d2",
+    "profile": "regulated_distributed",
+    "kernel": "guarded_federation",
+    "inputs": [
+      {
+        "name": "finding",
+        "type": "ClinicalFinding"
+      },
+      {
+        "name": "site_key",
+        "type": "Ed25519PrivateKey"
+      },
+      {
+        "name": "peer_record",
+        "type": "FederatedRecord"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "emitted",
+        "type": "FederatedRecord"
+      },
+      {
+        "name": "ingested",
+        "type": "LocalKnowledge"
+      }
+    ],
+    "nodes": [
+      {
+        "name": "classify",
+        "directive": "@native"
+      },
+      {
+        "name": "scrubbed",
+        "directive": "@native"
+      },
+      {
+        "name": "signed",
+        "directive": "@native"
+      },
+      {
+        "name": "emitted_record",
+        "directive": "@flow"
+      },
+      {
+        "name": "emitted",
+        "directive": "@native"
+      },
+      {
+        "name": "verified",
+        "directive": "@native"
+      },
+      {
+        "name": "inbound_scrub",
+        "directive": "@native"
+      },
+      {
+        "name": "local_record",
+        "directive": "@native"
+      },
+      {
+        "name": "ingested",
+        "directive": "@native"
+      }
+    ],
+    "invariant_count": 6,
+    "invariants": [
+      "classify.lane in [\"clinical_knowledge\", \"phi_lane\"]",
+      "scrubbed.has_phi == false",
+      "scrubbed.identifiers_removed >= 0",
+      "classify.lane != \"phi_lane\" or scrubbed.empty == true",
+      "verified.signature_valid == true",
+      "inbound_scrub.has_phi == false"
+    ],
+    "source_path": "flows/JointMemoryFederation.flow.mind",
+    "source": "// flows/JointMemoryFederation.flow.mind\n// Historia Clínica \u2014 federated joint clinical memory across multiple sites.\n// Apache-2.0 (see LICENSE)\n//\n// What this contract guarantees:\n//\n//   PHI (patient names, DOB, MRN, clinical notes, FHIR bundles) NEVER\n//   leaves the originating site. Only de-identified clinical knowledge\n//   propagates \u2014 drug-pair severity findings, BitNet activations on novel\n//   pairs, audit-chain witnesses, anonymised provider-disagreement\n//   patterns. The PHI gate is a typed runtime invariant, not a policy.\n//\n// Transport (all patent-pending STARGA technology):\n//\n//   mind-mem v3.x ships the multi-machine networking layer over:\n//     - MAP   (Mind Annotation Protocol)   \u2014 patent-pending STARGA\n//     - MIC@2 (Mind Interchange Coding v2) \u2014 patent-pending STARGA\n//     - binary framing                     \u2014 patent-pending STARGA\n//   Historia Clínica consumes the Apache-2.0 mind-mem dependency and\n//   gets the implicit Apache-2.0 \u00a7 3 patent grant for use-as-shipped.\n//\n// Pipeline (left-to-right composition):\n//\n//   local_finding \u2500\u25ba classify \u2500\u25ba phi_scrub \u2500\u25ba sign \u2500\u25ba emit\n//                                                       \u2502\n//                          (over MIC@2 / MAP / binary)  \u25bc\n//                                              federation_relay\n//                                                       \u2502\n//                                                       \u25bc\n//   peer_finding  \u25c4\u2500\u2500 verify \u25c4\u2500\u2500 phi_recheck \u25c4\u2500\u2500 ingest \u25c4\u2518\n//\n// Every `@verify` invariant is enforced at runtime; a violation\n// returns a structured InvariantViolation rather than emitting a\n// possibly-PHI-tainted record into the federation.\n\n@profile \"regulated_distributed\"\n@kernel  \"guarded_federation\"\nflow JointMemoryFederation {\n    input  finding:     ClinicalFinding\n    input  site_key:    Ed25519PrivateKey\n    input  peer_record: FederatedRecord\n    output emitted:     FederatedRecord\n    output ingested:    LocalKnowledge\n\n    // \u2500\u2500\u2500 EGRESS PATH (this site \u2192 peers) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n    // 1. Classify the finding into a federation lane.\n    //    `clinical_knowledge` lane = severity verdicts, BitNet outputs,\n    //    audit hashes \u2014 propagates freely. `phi_lane` = PHI; never\n    //    leaves the building. The classifier output is the load-bearing\n    //    PHI/non-PHI boundary.\n    node classify = @native federation_classify(finding)\n    invariant classify.lane in [\"clinical_knowledge\", \"phi_lane\"]\n\n    // 2. PHI scrubber \u2014 independent second-line check on the payload\n    //    before it hits the wire. Any string matching the PHI scanner's\n    //    18 identificadores del marco de desidentificación blocks the emit.\n    node scrubbed = @native phi_strip(classify.payload)\n    invariant scrubbed.has_phi == false\n    invariant scrubbed.identifiers_removed >= 0\n\n    // 3. Reject the entire emit if the lane was `phi_lane`.\n    //    A PHI-classified finding NEVER reaches the federation transport.\n    invariant classify.lane != \"phi_lane\" or scrubbed.empty == true\n\n    // 4. Sign the de-identified payload with this site's Ed25519 key\n    //    so peers can verify the originator and detect tampering.\n    node signed = @native ed25519_sign(scrubbed.payload, site_key)\n\n    // 5. Emit over mind-mem's patent-pending MAP / MIC@2 / binary\n    //    transport. Cross-site delivery is at-least-once with\n    //    idempotent ingestion at the receiver (deduplicates by\n    //    audit-chain hash).\n    node emitted_record = @flow mind_mem_publish(\n        signed.payload,\n        protocol:        \"mic@2\",\n        annotation:      \"map\",\n        framing:         \"binary\",\n        delivery_class:  \"at_least_once\",\n    )\n    assign emitted = emitted_record\n\n    // \u2500\u2500\u2500 INGRESS PATH (peers \u2192 this site) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n    // 6. Verify the incoming record's Ed25519 signature.\n    node verified = @native ed25519_verify(peer_record)\n    invariant verified.signature_valid == true\n\n    // 7. Re-run the PHI scrubber on the inbound payload \u2014 defence in\n    //    depth in case a peer's classifier was misconfigured. Any PHI\n    //    detected here is a federation-level incident; the record is\n    //    quarantined, alert is fired, and the source site's signing\n    //    key is added to the deny-list for review.\n    node inbound_scrub = @native phi_strip(verified.payload)\n    invariant inbound_scrub.has_phi == false\n\n    // 8. Ingest into the local mind-mem store. Tier-decay and\n    //    contradiction detection are mind-mem's existing v3 primitives\n    //    and apply automatically.\n    node local_record = @native mind_mem_ingest(\n        inbound_scrub.payload,\n        provenance:  verified.signer_id,\n        tier:        verified.payload.tier,\n    )\n    assign ingested = local_record\n}\n"
+  },
+  {
+    "name": "LabContraindication",
+    "plan_hash": "0f327e251bcc3fe2912a0bcf5287d4cdd641043c5433e36fe358b65941fdc970",
+    "profile": "regulated_online",
+    "kernel": "",
+    "inputs": [
+      {
+        "name": "patient_id",
+        "type": "PatientId"
+      },
+      {
+        "name": "medications",
+        "type": "MedicationList"
+      },
+      {
+        "name": "lab_history",
+        "type": "LabHistoryWindow"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "contraindications",
+        "type": "ContraindicationReport"
+      }
+    ],
+    "nodes": [
+      {
+        "name": "phi",
+        "directive": "@native"
+      },
+      {
+        "name": "trends",
+        "directive": "@native"
+      },
+      {
+        "name": "matches",
+        "directive": "@native"
+      },
+      {
+        "name": "scored",
+        "directive": "@native"
+      },
+      {
+        "name": "audit",
+        "directive": "@native"
+      },
+      {
+        "name": "contraindications",
+        "directive": "@native"
+      }
+    ],
+    "invariant_count": 2,
+    "invariants": [
+      "phi.safe_for_external == true",
+      "matches.threshold_proximity_valid == true"
+    ],
+    "source_path": "flows/LabContraindication.flow.mind",
+    "source": "// flows/LabContraindication.flow.mind\n// Historia Clínica \u2014 declining-lab + medication contraindication check.\n// Apache-2.0 (see LICENSE)\n//\n// Catches medications becoming contraindicated as labs trend toward\n// thresholds. Demo case: GFR dropping 45 \u2192 32 over 6 months while\n// patient is on metformin (contraindicated below GFR 30).\n//\n//     medications + labs \u2500\u25ba phi_scan \u2500\u25ba trend_analyze \u2500\u25ba contraindication_match \u2500\u25ba severity_score \u2500\u25ba report\n\n@profile \"regulated_online\"\nflow LabContraindication {\n    input  patient_id:     PatientId\n    input  medications:    MedicationList\n    input  lab_history:    LabHistoryWindow\n    output contraindications: ContraindicationReport\n\n    node phi = @native phi_scan(medications, lab_history)\n    invariant phi.safe_for_external == true\n\n    // Compute lab trends (linear regression over the window)\n    node trends = @native lab_trend_analyze(\n        history: lab_history,\n        window_months: 6,\n    )\n\n    // Match med-lab contraindication rules (e.g. metformin \u22a5 GFR < 30)\n    node matches = @native contraindication_match(\n        medications: medications,\n        trends:      trends,\n        rules_table: \"med_lab_contraindication_v1\",\n    )\n\n    invariant matches.threshold_proximity_valid == true\n\n    node scored = @native severity_score(\n        matches: matches,\n        severity_table: \"lab_proximity_severity_v1\",\n    )\n\n    node audit = @native emit_audit_chain(\n        plan_hash: $plan_hash,\n        nodes:     [phi, trends, matches, scored],\n        tag:       \"TAG_v1\",\n    )\n\n    assign contraindications = @native build_contraindication_report(scored, audit)\n}\n"
+  },
+  {
+    "name": "MedicationSafetyReview",
+    "plan_hash": "4a703dd3388f2997dbece895fb2ecd4580d0fc212f080f3e467e2a1109054be6",
+    "profile": "regulated_online",
+    "kernel": "guarded",
+    "inputs": [
+      {
+        "name": "patient_id",
+        "type": "PatientId"
+      },
+      {
+        "name": "medications",
+        "type": "MedicationList"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "report",
+        "type": "SafetyReport"
+      }
+    ],
+    "nodes": [
+      {
+        "name": "phi",
+        "directive": "@native"
+      },
+      {
+        "name": "normalized",
+        "directive": "@native"
+      },
+      {
+        "name": "tier1",
+        "directive": "@native"
+      },
+      {
+        "name": "tier2",
+        "directive": "@native"
+      },
+      {
+        "name": "tier3",
+        "directive": "@native"
+      },
+      {
+        "name": "bitnet",
+        "directive": "@native"
+      },
+      {
+        "name": "consensus",
+        "directive": "@llm"
+      },
+      {
+        "name": "synth",
+        "directive": "@llm"
+      },
+      {
+        "name": "audit",
+        "directive": "@native"
+      },
+      {
+        "name": "report",
+        "directive": "@native"
+      }
+    ],
+    "invariant_count": 6,
+    "invariants": [
+      "phi.safe_for_external == true",
+      "normalized.coverage_ratio >= 0.95",
+      "consensus.available_models >= 4",
+      "consensus.majority_or_abstain == true",
+      "synth.citations_valid == true",
+      "synth.unsupported_claims == 0"
+    ],
+    "source_path": "flows/MedicationSafetyReview.flow.mind",
+    "source": "// flows/MedicationSafetyReview.flow.mind\n// Historia Clínica \u2014 five-tier drug-interaction safety review.\n// Apache-2.0 (see LICENSE)\n//\n// Catches interactions like NSAID + warfarin \u2192 fatal bleeding risk.\n// The flow's content-addressed plan_hash is recorded in the audit\n// chain for every clinical decision; a regulator with this file and\n// the inputs replays the same plan and asserts byte-identical output.\n//\n// Pipeline (left-to-right composition):\n//\n//     medications \u2500\u25ba phi_scan \u2500\u25ba normalize \u2500\u25ba tier1 \u2500\u25ba tier2 \u2500\u25ba tier3 \u2500\u25ba bitnet \u2500\u25ba consensus \u2500\u25ba synthesize \u2500\u25ba report\n//\n// Every `@verify` invariant is enforced at runtime; a violation\n// returns a structured InvariantViolation rather than a possibly-\n// wrong clinical answer. In healthcare, \"I don't know\" saves lives.\n\n@profile \"regulated_online\"\n@kernel  \"guarded\"\nflow MedicationSafetyReview {\n    input  patient_id:   PatientId\n    input  medications:  MedicationList\n    output report:       SafetyReport\n\n    // \u2500\u2500\u2500\u2500\u2500 PHI guard \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    node phi = @native phi_scan(medications)\n    invariant phi.safe_for_external == true\n\n    // \u2500\u2500\u2500\u2500\u2500 Normalize medication names \u2192 RxCUI \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    node normalized = @native rxnorm_normalize(medications)\n    invariant normalized.coverage_ratio >= 0.95   // \u2265 95% pairs resolved\n\n    // \u2500\u2500\u2500\u2500\u2500 Tier 1: deterministic table (microseconds) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    node tier1 = @native deterministic_table_check(normalized)\n\n    // \u2500\u2500\u2500\u2500\u2500 Tier 2: OpenEvidence (Mayo / Elsevier ClinicalKey AI) \u2500\n    node tier2 = @native openevidence_lookup(normalized, tier1.uncovered)\n\n    // \u2500\u2500\u2500\u2500\u2500 Tier 3: NIH RxNorm Drug Interaction API \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    node tier3 = @native nih_drug_interaction_lookup(normalized, tier2.uncovered)\n\n    // \u2500\u2500\u2500\u2500\u2500 Tier 4.5: BitNet b1.58 ternary classifier \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    // Q16.16 fixed-point forward; bit-identical across architectures.\n    // primitiva de reproducibilidad: every output carries a\n    // repro_hash that any auditor can re-verify in <1 ms per pair.\n    node bitnet = @native bitnet_ternary_classify(normalized)\n\n    // \u2500\u2500\u2500\u2500\u2500 Tier 4: 5-model US-based LLM consensus \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    node consensus = @llm consensus(\n        prior:       [tier1, tier2, tier3, bitnet],\n        models:      [\"gpt-5.5\", \"gemini-3.1-pro\",\n                      \"grok-4.3\", \"claude-opus-4.8\", \"sonar-pro\"],\n        majority_or_abstain: true,\n    )\n    invariant consensus.available_models >= 4\n    invariant consensus.majority_or_abstain == true\n\n    // \u2500\u2500\u2500\u2500\u2500 Synthesis (LLM) \u2014 explanation grounded in evidence \u2500\u2500\n    node synth = @llm synthesize(\n        findings:    [tier1, tier2, tier3, bitnet, consensus],\n        require_citations: true,\n    )\n    invariant synth.citations_valid == true\n    invariant synth.unsupported_claims == 0\n\n    // \u2500\u2500\u2500\u2500\u2500 Audit chain \u2014 every node hash-linked to plan_hash \u2500\u2500\u2500\n    node audit = @native emit_audit_chain(\n        plan_hash:   $plan_hash,\n        nodes:       [phi, normalized, tier1, tier2, tier3, bitnet, consensus, synth],\n        tag:         \"TAG_v1\",\n    )\n\n    assign report = @native build_safety_report(synth, audit)\n}\n"
+  },
+  {
+    "name": "ProviderDisagreement",
+    "plan_hash": "a24f13b553ad8f6e228215dc5abf0a90057a8b8384d0a01c5c3abd59f7fb078f",
+    "profile": "regulated_online",
+    "kernel": "",
+    "inputs": [
+      {
+        "name": "patient_id",
+        "type": "PatientId"
+      },
+      {
+        "name": "provider_records",
+        "type": "ProviderRecordList"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "disagreements",
+        "type": "DisagreementReport"
+      }
+    ],
+    "nodes": [
+      {
+        "name": "phi",
+        "directive": "@native"
+      },
+      {
+        "name": "claims",
+        "directive": "@native"
+      },
+      {
+        "name": "contradictions",
+        "directive": "@native"
+      },
+      {
+        "name": "resolution",
+        "directive": "@llm"
+      },
+      {
+        "name": "audit",
+        "directive": "@native"
+      },
+      {
+        "name": "disagreements",
+        "directive": "@native"
+      }
+    ],
+    "invariant_count": 3,
+    "invariants": [
+      "phi.safe_for_external == true",
+      "claims.coverage_ratio >= 0.85",
+      "resolution.citations_valid == true"
+    ],
+    "source_path": "flows/ProviderDisagreement.flow.mind",
+    "source": "// flows/ProviderDisagreement.flow.mind\n// Historia Clínica \u2014 cross-provider contradiction detection.\n// Apache-2.0 (see LICENSE)\n//\n// Catches conflicting care plans across multiple providers. Demo case:\n// cardiologist's BP target <130/80 vs nephrologist's <140/90 for the\n// same patient.\n//\n//     provider_records \u2500\u25ba phi_scan \u2500\u25ba claim_extract \u2500\u25ba contradiction_detect \u2500\u25ba resolution_suggest \u2500\u25ba report\n\n@profile \"regulated_online\"\nflow ProviderDisagreement {\n    input  patient_id:        PatientId\n    input  provider_records:  ProviderRecordList\n    output disagreements:     DisagreementReport\n\n    node phi = @native phi_scan(provider_records)\n    invariant phi.safe_for_external == true\n\n    // Extract typed clinical claims (BP target, medication regimen,\n    // diagnostic agreement, treatment plan) from each provider record.\n    node claims = @native extract_clinical_claims(provider_records)\n    invariant claims.coverage_ratio >= 0.85\n\n    // Detect harmful contradictions (NOT acceptable specialty nuance).\n    node contradictions = @native detect_contradictions(\n        claims:                claims,\n        nuance_filter:         \"specialty_disagreement_v1\",\n        severity_threshold:    \"moderate\",\n    )\n\n    // Suggest resolution strategies (escalate to PCP, request reconciliation,\n    // surface for nurse review).\n    node resolution = @llm suggest_resolution(\n        contradictions: contradictions,\n        require_grounded_in: claims,\n    )\n    invariant resolution.citations_valid == true\n\n    node audit = @native emit_audit_chain(\n        plan_hash: $plan_hash,\n        nodes:     [phi, claims, contradictions, resolution],\n        tag:       \"TAG_v1\",\n    )\n\n    assign disagreements = @native build_disagreement_report(\n        contradictions, resolution, audit\n    )\n}\n"
+  },
+  {
+    "name": "WhatIfSimulation",
+    "plan_hash": "dabcf5790ac62d5778371662114abc331d1d857141002103f113f82549713058",
+    "profile": "regulated_online",
+    "kernel": "",
+    "inputs": [
+      {
+        "name": "patient_id",
+        "type": "PatientId"
+      },
+      {
+        "name": "current",
+        "type": "MedicationList"
+      },
+      {
+        "name": "perturbation",
+        "type": "MedicationPerturbation"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "preview",
+        "type": "SafetyDiffReport"
+      }
+    ],
+    "nodes": [
+      {
+        "name": "target",
+        "directive": "@native"
+      },
+      {
+        "name": "review_current",
+        "directive": "@flow"
+      },
+      {
+        "name": "review_target",
+        "directive": "@flow"
+      },
+      {
+        "name": "diff",
+        "directive": "@native"
+      },
+      {
+        "name": "narrative",
+        "directive": "@llm"
+      },
+      {
+        "name": "audit",
+        "directive": "@native"
+      },
+      {
+        "name": "preview",
+        "directive": "@native"
+      }
+    ],
+    "invariant_count": 4,
+    "invariants": [
+      "target.well_formed == true",
+      "review_current.report.complete == true",
+      "review_target.report.complete  == true",
+      "narrative.citations_valid == true"
+    ],
+    "source_path": "flows/WhatIfSimulation.flow.mind",
+    "source": "// flows/WhatIfSimulation.flow.mind\n// Historia Clínica \u2014 what-if medication preview.\n// Apache-2.0 (see LICENSE)\n//\n// Lets a clinician simulate adding/removing/substituting a medication\n// before making the change. Runs the full five-tier safety pipeline\n// against the hypothetical regimen and surfaces diffs vs the current\n// regimen.\n//\n// Demo flow: \"What if we add aspirin to a patient already on warfarin?\"\n//\n//     current + perturbation \u2500\u25ba resolve_target \u2500\u25ba run_review \u2500\u25ba diff \u2500\u25ba report\n\n@profile \"regulated_online\"\nflow WhatIfSimulation {\n    input  patient_id:    PatientId\n    input  current:       MedicationList\n    input  perturbation:  MedicationPerturbation   // add | remove | substitute\n    output preview:       SafetyDiffReport\n\n    // Resolve the target regimen (apply the perturbation)\n    node target = @native apply_perturbation(current, perturbation)\n    invariant target.well_formed == true\n\n    // Run the five-tier safety review on the hypothetical regimen.\n    // This is the SAME contract as MedicationSafetyReview.flow.mind \u2014\n    // any change there propagates here automatically.\n    node review_current = @flow MedicationSafetyReview(\n        patient_id:  patient_id,\n        medications: current,\n    )\n    node review_target = @flow MedicationSafetyReview(\n        patient_id:  patient_id,\n        medications: target,\n    )\n\n    invariant review_current.report.complete == true\n    invariant review_target.report.complete  == true\n\n    // Diff: which findings appeared / disappeared / changed severity\n    node diff = @native compute_safety_diff(\n        before: review_current.report,\n        after:  review_target.report,\n    )\n\n    // LLM-grounded narrative explaining the diff in plain language\n    node narrative = @llm explain_safety_diff(\n        diff: diff,\n        require_grounded_in: [review_current.report, review_target.report],\n    )\n    invariant narrative.citations_valid == true\n\n    node audit = @native emit_audit_chain(\n        plan_hash: $plan_hash,\n        nodes:     [target, review_current, review_target, diff, narrative],\n        tag:       \"TAG_v1\",\n    )\n\n    assign preview = @native build_safety_diff_report(diff, narrative, audit)\n}\n"
+  }
+]

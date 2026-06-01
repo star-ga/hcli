@@ -1,0 +1,33 @@
+# Historia Clínica — Memoria Clínica Nacional
+
+> Capa de seguridad determinista que ancla el razonamiento de la IA sanitaria a evidencia clínica verificada. Historia Clínica es una memoria clínica persistente, auditable y a prueba de contradicciones para agentes de IA en el ámbito sanitario.
+
+Historia Clínica detecta interacciones medicamentosas, conflictos de alergias y contradicciones entre profesionales empleando terminología médica estándar (UMLS, RxNorm, SNOMED CT), recuperación con umbral de confianza y un registro de auditoría a prueba de manipulaciones. Se expone a cualquier agente de IA sanitaria mediante un Servidor MCP (12 herramientas) y un Agente A2A (5 capacidades).
+
+## Qué hace
+
+- **Detección de interacciones medicamentosas**: proceso de cuatro niveles (tabla determinista → API OpenEvidence → API RxNorm → cascada multi-LLM).
+- **Alertas de reactividad cruzada de alergias**: jerarquía de clases de fármacos SNOMED CT con expansión de sinónimos y detección entre clases.
+- **Correspondencia entre vocabularios UMLS**: CIE-10 ↔ SNOMED CT ↔ LOINC ↔ RxNorm mediante el Metatesauro UMLS.
+- **Detección de contradicciones entre profesionales**: planes de cuidados contradictorios, tendencias analíticas en descenso y contraindicaciones entre analítica y fármacos.
+- **Memoria clínica persistente**: incorpora datos FHIR R4 a bloques de memoria consultables (fusión BM25 + vectorial + RRF).
+- **Síntesis fundamentada con LLM**: narrativas específicas del paciente con citas explícitas de la evidencia.
+- **Abstención segura**: cuando la evidencia es insuficiente, el sistema se niega a generar una narrativa.
+- **Registro de auditoría SHA-256**: cada decisión clínica se registra en una cadena de Merkle a prueba de manipulaciones.
+
+## Caso de demostración
+
+Lucía Obono Mangue, 67 años, 4 profesionales, 7 medicamentos: el sistema detecta automáticamente 4 conflictos clínicos (warfarina + ibuprofeno; alergia a penicilina + amoxicilina; descenso del FG + metformina; objetivos de tensión arterial contradictorios) más 2 hallazgos adicionales. Todos los datos son ficticios y sirven como datos de prueba; no se utiliza ninguna Información Sanitaria Protegida (PHI).
+
+## Documentación
+
+- [README](README.md): visión general, arquitectura, instalación y uso.
+- [Integración UMLS](UMLS_INTEGRATION.md): integración de terminología médica (RxNorm, SNOMED CT, Metatesauro UMLS).
+- [Política de seguridad](SECURITY.md): manejo de datos sintéticos, autenticación y medidas de seguridad.
+- [Guía de contribución](CONTRIBUTING.md): configuración del entorno de desarrollo y normas de código.
+
+## Notas
+
+- Solo datos sintéticos. No se almacena, procesa ni transmite ninguna Información Sanitaria Protegida (PHI).
+- Desarrollado por STARGA Inc. (https://star.ga).
+- Sitio en revisión privada; no indexar.

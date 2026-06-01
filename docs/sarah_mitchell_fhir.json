@@ -1,0 +1,311 @@
+{
+  "resourceType": "Bundle",
+  "id": "sarah-mitchell-fhir-r4-demo",
+  "type": "collection",
+  "meta": {
+    "lastUpdated": "2026-05-02T20:00:00.000Z",
+    "profile": ["http://hl7.org/fhir/StructureDefinition/Bundle"]
+  },
+  "entry": [
+    {
+      "fullUrl": "Patient/sarah-mitchell",
+      "resource": {
+        "resourceType": "Patient",
+        "id": "sarah-mitchell",
+        "name": [{"family": "Obono Mangue", "given": ["Lucía"]}],
+        "gender": "female",
+        "birthDate": "1959-03-12",
+        "deceasedBoolean": false,
+        "address": [{"city": "Boston", "state": "MA", "country": "US"}],
+        "generalPractitioner": [
+          {"reference": "Practitioner/prac-pcp"}
+        ]
+      }
+    },
+    {
+      "fullUrl": "Practitioner/prac-pcp",
+      "resource": {
+        "resourceType": "Practitioner",
+        "id": "prac-pcp",
+        "identifier": [{
+          "system": "http://hl7.org/fhir/sid/us-npi",
+          "value": "1431602063",
+          "type": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v2-0203", "code": "PRN", "display": "Número de proveedor"}]}
+        }],
+        "name": [{"family": "Patel", "given": ["Anita"], "suffix": ["MD"]}],
+        "qualification": [{
+          "code": {
+            "coding": [{"system": "http://nucc.org/provider-taxonomy", "code": "207R00000X", "display": "Internal Medicine"}],
+            "text": "Internal Medicine — Primary Care Physician"
+          }
+        }],
+        "address": [{"city": "Boston", "state": "MA", "country": "US"}],
+        "_meta": {"npi_source": "DEMO_LUHN_GENERATED — número de proveedor ficticio (Luhn)"}
+      }
+    },
+    {
+      "fullUrl": "Practitioner/prac-cardio",
+      "resource": {
+        "resourceType": "Practitioner",
+        "id": "prac-cardio",
+        "identifier": [{
+          "system": "http://hl7.org/fhir/sid/us-npi",
+          "value": "1642442994",
+          "type": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v2-0203", "code": "PRN", "display": "Número de proveedor"}]}
+        }],
+        "name": [{"family": "Liu", "given": ["James"], "suffix": ["MD", "FACC"]}],
+        "qualification": [{
+          "code": {
+            "coding": [{"system": "http://nucc.org/provider-taxonomy", "code": "207RC0000X", "display": "Cardiovascular Disease"}],
+            "text": "Cardiology — Cardiovascular Disease"
+          }
+        }],
+        "address": [{"city": "Boston", "state": "MA", "country": "US"}],
+        "_meta": {"npi_source": "DEMO_LUHN_GENERATED — número de proveedor ficticio (Luhn)"}
+      }
+    },
+    {
+      "fullUrl": "Practitioner/prac-nephro",
+      "resource": {
+        "resourceType": "Practitioner",
+        "id": "prac-nephro",
+        "identifier": [{
+          "system": "http://hl7.org/fhir/sid/us-npi",
+          "value": "1040623971",
+          "type": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v2-0203", "code": "PRN", "display": "Número de proveedor"}]}
+        }],
+        "name": [{"family": "Santos", "given": ["Maria"], "suffix": ["MD"]}],
+        "qualification": [{
+          "code": {
+            "coding": [{"system": "http://nucc.org/provider-taxonomy", "code": "207RN0300X", "display": "Nephrology"}],
+            "text": "Nephrology"
+          }
+        }],
+        "address": [{"city": "Boston", "state": "MA", "country": "US"}],
+        "_meta": {"npi_source": "DEMO_LUHN_GENERATED — número de proveedor ficticio (Luhn)"}
+      }
+    },
+    {
+      "fullUrl": "Practitioner/prac-er",
+      "resource": {
+        "resourceType": "Practitioner",
+        "id": "prac-er",
+        "identifier": [{
+          "system": "http://hl7.org/fhir/sid/us-npi",
+          "value": "1857610905",
+          "type": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v2-0203", "code": "PRN", "display": "Número de proveedor"}]}
+        }],
+        "name": [{"family": "O'Connor", "given": ["Kevin"], "suffix": ["MD"]}],
+        "qualification": [{
+          "code": {
+            "coding": [{"system": "http://nucc.org/provider-taxonomy", "code": "207P00000X", "display": "Emergency Medicine"}],
+            "text": "Emergency Medicine"
+          }
+        }],
+        "address": [{"city": "Boston", "state": "MA", "country": "US"}],
+        "_meta": {"npi_source": "DEMO_LUHN_GENERATED — número de proveedor ficticio (Luhn)"}
+      }
+    },
+    {
+      "fullUrl": "Condition/cond-t2dm",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "cond-t2dm",
+        "subject": {"reference": "Patient/sarah-mitchell"},
+        "code": {
+          "coding": [
+            {"system": "http://snomed.info/sct", "code": "44054006", "display": "Type 2 diabetes mellitus"},
+            {"system": "http://hl7.org/fhir/sid/icd-10", "code": "E11.9"}
+          ],
+          "text": "Type 2 Diabetes Mellitus"
+        },
+        "clinicalStatus": {"coding": [{"code": "active"}]}
+      }
+    },
+    {
+      "fullUrl": "Condition/cond-htn",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "cond-htn",
+        "subject": {"reference": "Patient/sarah-mitchell"},
+        "code": {
+          "coding": [
+            {"system": "http://snomed.info/sct", "code": "59621000", "display": "Essential hypertension"},
+            {"system": "http://hl7.org/fhir/sid/icd-10", "code": "I10"}
+          ],
+          "text": "Hypertension"
+        },
+        "clinicalStatus": {"coding": [{"code": "active"}]}
+      }
+    },
+    {
+      "fullUrl": "Condition/cond-ckd",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "cond-ckd",
+        "subject": {"reference": "Patient/sarah-mitchell"},
+        "code": {
+          "coding": [
+            {"system": "http://snomed.info/sct", "code": "433146006", "display": "Chronic kidney disease stage 3"},
+            {"system": "http://hl7.org/fhir/sid/icd-10", "code": "N18.32"}
+          ],
+          "text": "Chronic Kidney Disease Stage 3b"
+        },
+        "clinicalStatus": {"coding": [{"code": "active"}]}
+      }
+    },
+    {
+      "fullUrl": "Condition/cond-afib",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "cond-afib",
+        "subject": {"reference": "Patient/sarah-mitchell"},
+        "code": {
+          "coding": [
+            {"system": "http://snomed.info/sct", "code": "49436004", "display": "Atrial fibrillation"},
+            {"system": "http://hl7.org/fhir/sid/icd-10", "code": "I48.91"}
+          ],
+          "text": "Atrial Fibrillation"
+        },
+        "clinicalStatus": {"coding": [{"code": "active"}]}
+      }
+    },
+    {
+      "fullUrl": "AllergyIntolerance/allergy-pen",
+      "resource": {
+        "resourceType": "AllergyIntolerance",
+        "id": "allergy-pen",
+        "patient": {"reference": "Patient/sarah-mitchell"},
+        "code": {
+          "coding": [
+            {"system": "http://snomed.info/sct", "code": "91936005", "display": "Allergy to penicillin"}
+          ],
+          "text": "Penicillin allergy (anaphylaxis)"
+        },
+        "criticality": "high",
+        "type": "allergy",
+        "category": ["medication"]
+      }
+    },
+    {
+      "fullUrl": "MedicationStatement/med-warfarin",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "med-warfarin",
+        "subject": {"reference": "Patient/sarah-mitchell"},
+        "informationSource": {"reference": "Practitioner/prac-cardio"},
+        "status": "active",
+        "medicationCodeableConcept": {
+          "coding": [{"system": "http://www.nlm.nih.gov/research/umls/rxnorm", "code": "11289", "display": "warfarin"}],
+          "text": "Warfarin 5mg PO daily (cardiologist)"
+        }
+      }
+    },
+    {
+      "fullUrl": "MedicationStatement/med-metformin",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "med-metformin",
+        "subject": {"reference": "Patient/sarah-mitchell"},
+        "informationSource": {"reference": "Practitioner/prac-pcp"},
+        "status": "active",
+        "medicationCodeableConcept": {
+          "coding": [{"system": "http://www.nlm.nih.gov/research/umls/rxnorm", "code": "6809", "display": "metformin"}],
+          "text": "Metformin 1000mg PO BID (PCP)"
+        }
+      }
+    },
+    {
+      "fullUrl": "MedicationStatement/med-lisinopril",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "med-lisinopril",
+        "subject": {"reference": "Patient/sarah-mitchell"},
+        "informationSource": {"reference": "Practitioner/prac-nephro"},
+        "status": "active",
+        "medicationCodeableConcept": {
+          "coding": [{"system": "http://www.nlm.nih.gov/research/umls/rxnorm", "code": "29046", "display": "lisinopril"}],
+          "text": "Lisinopril 10mg PO daily (nephrologist)"
+        }
+      }
+    },
+    {
+      "fullUrl": "MedicationStatement/med-ibuprofen",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "med-ibuprofen",
+        "subject": {"reference": "Patient/sarah-mitchell"},
+        "informationSource": {"reference": "Practitioner/prac-er"},
+        "status": "active",
+        "dateAsserted": "2026-05-01",
+        "medicationCodeableConcept": {
+          "coding": [{"system": "http://www.nlm.nih.gov/research/umls/rxnorm", "code": "5640", "display": "ibuprofen"}],
+          "text": "Ibuprofen 600mg PO TID PRN knee pain (ER, NEW)"
+        },
+        "note": [{"text": "Prescribed by médico de urgencias (Nº de proveedor 1857610905) 2026-05-01 for acute knee pain. Anticoagulation status not reviewed."}]
+      }
+    },
+    {
+      "fullUrl": "Observation/lab-gfr-2026-05",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "lab-gfr-2026-05",
+        "subject": {"reference": "Patient/sarah-mitchell"},
+        "status": "final",
+        "code": {
+          "coding": [{"system": "http://loinc.org", "code": "62238-1", "display": "Glomerular filtration rate"}],
+          "text": "GFR (mL/min/1.73m^2)"
+        },
+        "valueQuantity": {"value": 32, "unit": "mL/min/1.73m^2", "system": "http://unitsofmeasure.org"},
+        "effectiveDateTime": "2026-05-01T08:30:00Z"
+      }
+    },
+    {
+      "fullUrl": "Observation/lab-gfr-2026-02",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "lab-gfr-2026-02",
+        "subject": {"reference": "Patient/sarah-mitchell"},
+        "status": "final",
+        "code": {
+          "coding": [{"system": "http://loinc.org", "code": "62238-1", "display": "Glomerular filtration rate"}],
+          "text": "GFR (mL/min/1.73m^2)"
+        },
+        "valueQuantity": {"value": 45, "unit": "mL/min/1.73m^2", "system": "http://unitsofmeasure.org"},
+        "effectiveDateTime": "2026-02-10T08:30:00Z"
+      }
+    },
+    {
+      "fullUrl": "Observation/bp-cardiology-target",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "bp-cardiology-target",
+        "subject": {"reference": "Patient/sarah-mitchell"},
+        "performer": [{"reference": "Practitioner/prac-cardio"}],
+        "status": "final",
+        "category": [{"coding": [{"code": "vital-signs"}]}],
+        "code": {
+          "coding": [{"system": "http://loinc.org", "code": "85354-9"}],
+          "text": "Blood pressure target — Cardiologist"
+        },
+        "note": [{"text": "Cardiologist target <130/80 mmHg (per JNC 8 for AFib + CKD). Source: Practitioner/prac-cardio (Nº de proveedor 1642442994)."}]
+      }
+    },
+    {
+      "fullUrl": "Observation/bp-nephrology-target",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "bp-nephrology-target",
+        "subject": {"reference": "Patient/sarah-mitchell"},
+        "performer": [{"reference": "Practitioner/prac-nephro"}],
+        "status": "final",
+        "category": [{"coding": [{"code": "vital-signs"}]}],
+        "code": {
+          "coding": [{"system": "http://loinc.org", "code": "85354-9"}],
+          "text": "Blood pressure target — Nephrologist"
+        },
+        "note": [{"text": "Nephrologist target <140/90 mmHg (per ACC/AHA 2017 for proteinuric CKD without diabetes). Source: Practitioner/prac-nephro (Nº de proveedor 1040623971)."}]
+      }
+    }
+  ]
+}

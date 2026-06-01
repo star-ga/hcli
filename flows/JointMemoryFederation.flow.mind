@@ -1,0 +1,209 @@
+// flows/JointMemoryFederation.flow.mind
+// Historia Clínica — memoria clínica conjunta federada entre múltiples centros.
+// Apache-2.0 (ver LICENSE)
+//
+// Prueba ejecutable (transporte simulado):
+//   python3 scripts/federation_mock_demo.py
+//
+//   Simula 2 centros de Historia Clínica en proceso (Hospital General de Malabo
+//   + Hospital Regional de Bata) que federan un hallazgo de gravedad
+//   warfarin+ibuprofen de extremo a extremo. Se ejercitan los 16 invariantes
+//   tipados; código de salida 0 = contrato satisfecho.
+//   Para la ruta de la barrera de datos del paciente: python3 scripts/federation_mock_demo.py --phi-test
+//
+// Lo que garantiza este contrato:
+//
+//   Los datos del paciente (nombres de paciente, fecha de nacimiento, MRN,
+//   notas clínicas, paquetes FHIR) NUNCA salen del centro de origen. Solo se
+//   propaga el conocimiento clínico desidentificado — hallazgos de gravedad de
+//   pares de fármacos, activaciones BitNet sobre pares nuevos, testigos de la
+//   cadena de auditoría, patrones anonimizados de discrepancia entre
+//   profesionales. La barrera de datos del paciente es un invariante tipado en
+//   tiempo de ejecución, no una política.
+//
+// Transporte (tecnología STARGA):
+//
+//   mind-mem v3.x incluye la capa de red multimáquina sobre:
+//     - MAP   (Mind Annotation Protocol)
+//     - MIC@2 (Mind Interchange Coding v2)
+//     - tramado binario
+//   Historia Clínica consume la dependencia Apache-2.0 mind-mem y obtiene la
+//   concesión implícita de patente del § 3 de Apache-2.0 para el uso tal como
+//   se publica.
+//
+// Cadena (composición de izquierda a derecha):
+//
+//   local_finding ─► classify ─► phi_scrub ─► sign ─► emit
+//                                                       │
+//                          (sobre MIC@2 / MAP / binario)▼
+//                                              federation_relay
+//                                                       │
+//                                                       ▼
+//   peer_finding  ◄── verify ◄── phi_recheck ◄── ingest ◄┘
+//
+// Cada invariante `@verify` se aplica en tiempo de ejecución; una violación
+// devuelve un InvariantViolation estructurado en lugar de emitir a la
+// federación un registro posiblemente contaminado con datos del paciente.
+
+@profile "regulated_distributed"
+@kernel  "guarded_federation"
+flow JointMemoryFederation {
+    input  finding:              ClinicalFinding
+    input  site_key:             Ed25519PrivateKey
+    input  site_epoch:           KeyEpoch
+    input  site_x25519_private:  X25519PrivateKey
+    input  peer_pubkey:          X25519PublicKey
+    input  peer_record:          FederatedRecord
+    input  peer_quorum:          list<FederatedRecord>
+    output emitted:              FederatedRecord
+    output ingested:             LocalKnowledge
+
+    // ─── RUTA DE SALIDA (este centro → pares) ─────────────────────
+
+    // 1. Clasifica el hallazgo en un carril de federación.
+    //    El carril `clinical_knowledge` = veredictos de gravedad, salidas
+    //    BitNet, hashes de auditoría — se propaga libremente. `phi_lane` =
+    //    datos del paciente; nunca sale del edificio. La salida del
+    //    clasificador es la frontera portante entre datos del paciente y no.
+    node classify = @native federation_classify(finding)
+    invariant classify.lane in ["clinical_knowledge", "phi_lane"]
+
+    // 2. Depurador de datos del paciente — comprobación independiente de
+    //    segunda línea sobre la carga antes de que llegue a la red. Cualquier
+    //    cadena que coincida con los 18 identificadores de puerto seguro del
+    //    escáner de datos del paciente bloquea la emisión.
+    node scrubbed = @native phi_strip(classify.payload)
+    invariant scrubbed.has_phi == false
+    invariant scrubbed.identifiers_removed >= 0
+
+    // 3. Guarda estructural FHIR — aunque el depurador pase por alto un token,
+    //    cualquier tipo de recurso FHIR que contenga la identidad del paciente
+    //    queda en cuarentena solo por su forma, con independencia del resultado
+    //    del depurador. Defensa frente a un fallo de modo común de phi_strip en
+    //    ambos centros.
+    invariant scrubbed.payload.fhir_resource_type not in [
+        "Patient", "Observation", "MedicationStatement",
+        "Encounter", "DocumentReference",
+    ]
+
+    // 4. Rechaza toda la emisión si el carril era `phi_lane`.
+    //    Un hallazgo clasificado como datos del paciente NUNCA alcanza el
+    //    transporte de federación.
+    invariant classify.lane != "phi_lane" or scrubbed.empty == true
+
+    // 5. Estampa issued_at + nonce para que los pares puedan rechazar
+    //    reenvíos y aplicar una ventana de frescura en la recepción.
+    node stamped = @native add_issued_at_and_nonce(scrubbed.payload)
+    invariant stamped.has_issued_at == true
+    invariant stamped.has_nonce_128bit == true
+
+    // 6. Firma la carga desidentificada y con marca de tiempo con el epoch de
+    //    clave actual de este centro. Los receptores pueden validar contra la
+    //    lista de denegación de KeyEpoch por centro para revocar epochs
+    //    comprometidos retroactivamente.
+    node signed = @native ed25519_sign(stamped.payload, site_key, site_epoch)
+    invariant signed.epoch == site_epoch
+    invariant signed.canonical_preimage_schema == "TAG_v1_NUL_separated"
+
+    // 6.5. Cifra el sobre firmado antes de que toque la red.
+    //      Aunque los datos del paciente se han eliminado, la señal clínica
+    //      desidentificada (veredictos de gravedad, activaciones BitNet,
+    //      patrones de discrepancia entre profesionales) tiene valor
+    //      competitivo y adversarial. X25519 ECDH + ChaCha20-Poly1305 cierra la
+    //      brecha de lectura en ruta. Derivación de clave por registro; la clave
+    //      pública anclada al epoch del receptor es la única que puede descifrar.
+    node sealed = @native x25519_seal(
+        signed.payload,
+        recipient_public_key:  peer_pubkey,
+        cipher:                "chacha20-poly1305",
+        kdf:                   "hkdf-sha256",
+        per_record_nonce:      true,
+    )
+    invariant sealed.payload_encrypted == true
+    invariant sealed.cipher == "chacha20-poly1305"
+    invariant sealed.has_aead_tag == true
+
+    // 7. Emite sobre el transporte MAP / MIC@2 / binario de mind-mem. La
+    //    entrega entre centros es de al menos una vez con incorporación
+    //    idempotente en el receptor (deduplica por semantic_idempotency_hash
+    //    — distinto de transport_dedup_hash).
+    node emitted_record = @flow mind_mem_publish(
+        sealed.payload,
+        protocol:                   "mic@2",
+        annotation:                 "map",
+        framing:                    "binary",
+        delivery_class:             "at_least_once",
+        semantic_idempotency_hash:  signed.semantic_hash,
+        transport_dedup_hash:       sealed.envelope_hash,
+    )
+    assign emitted = emitted_record
+
+    // ─── RUTA DE ENTRADA (pares → este centro) ────────────────────
+
+    // 7.5. Descifra el sobre sellado entrante usando la clave privada X25519
+    //      de este centro. Un descifrado fallido (destinatario incorrecto,
+    //      texto cifrado manipulado, etiqueta AEAD ausente) falla de forma
+    //      cerrada antes de cualquier verificación de firma — de modo que un
+    //      atacante ni siquiera puede sondear claves de emisor válidas sin
+    //      poseer primero la clave privada del destinatario.
+    node opened = @native x25519_open(
+        peer_record,
+        recipient_private_key:  site_x25519_private,
+        cipher:                 "chacha20-poly1305",
+    )
+    invariant opened.decryption_succeeded == true
+    invariant opened.aead_tag_verified == true
+
+    // 8. Verifica la firma Ed25519 del registro (ya descifrado) Y que su
+    //    KeyEpoch no esté en la lista de denegación. Un epoch comprometido
+    //    pone en cuarentena retroactivamente todo registro firmado bajo él.
+    node verified = @native ed25519_verify(opened.payload)
+    invariant verified.signature_valid == true
+    invariant verified.key_epoch_revoked == false
+
+    // 9. Ventana de frescura — rechaza registros de más de 5 minutos para
+    //    cerrar la ventana de ataque por reenvío. Configurable por despliegue.
+    invariant verified.payload.issued_at_seconds_ago <= 300
+    invariant verified.payload.issued_at_seconds_ago >= 0
+
+    // 10. Reejecuta el depurador de datos del paciente sobre la carga entrante
+    //     — defensa en profundidad por si el clasificador de un par estuviera
+    //     mal configurado. Cualquier dato del paciente detectado aquí es un
+    //     incidente a nivel de federación; el registro se pone en cuarentena, se
+    //     dispara una alerta y el KeyEpoch del par se añade a la lista de
+    //     denegación local para su revisión.
+    node inbound_scrub = @native phi_strip(verified.payload)
+    invariant inbound_scrub.has_phi == false
+
+    // 11. Comprobación de límites de tier — el valor de tier proporcionado por
+    //     el par se acota contra el esquema de tier local de mind-mem [0..5]. Un
+    //     par comprometido no puede forzar registros al depósito de mayor
+    //     retención.
+    node tier_clamped = @native clamp_tier(verified.payload.tier, min: 0, max: 5)
+    invariant tier_clamped.value >= 0 and tier_clamped.value <= 5
+
+    // 12. Barrera de quórum de gravedad — para cualquier veredicto de gravedad
+    //     de un par de fármacos, acéptalo como evidencia SOLO si al menos N de M
+    //     pares independientes (por defecto 3 de 5) han firmado registros
+    //     concurrentes. Los hallazgos de un solo par se almacenan en nivel bajo;
+    //     los hallazgos confirmados por quórum se promueven a grado de
+    //     evidencia. Evita agrupaciones bimodales de veredictos entre centros.
+    node quorum = @native severity_quorum(
+        candidate:            verified.payload,
+        peer_signatures:      peer_quorum,
+        n_required:           3,
+        m_observed:           5,
+    )
+    invariant quorum.has_concurring_signatures or quorum.tier <= 1
+
+    // 13. Incorpora al almacén local de mind-mem. El decaimiento de tier y la
+    //     detección de contradicciones son primitivas v3 existentes de mind-mem
+    //     y se aplican automáticamente.
+    node local_record = @native mind_mem_ingest(
+        inbound_scrub.payload,
+        provenance:  verified.signer_id,
+        tier:        tier_clamped.value,
+        evidence_grade: quorum.has_concurring_signatures,
+    )
+    assign ingested = local_record
+}

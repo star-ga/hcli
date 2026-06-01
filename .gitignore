@@ -1,0 +1,38 @@
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.env
+.venv/
+
+# Generated media (not tracked)
+*.mp4
+*.mp3
+*.gif
+*.cast
+*.png
+concat_list.txt
+silence.mp3
+vo_segment_*.mp3
+
+# Temporary test files
+test_bundle.json
+lucia_essential.json
+lucia_obono_fhir.json
+
+# Local-only artifacts
+lucia_clinical_notes.txt
+
+# Internal working scripts (not part of project)
+generate_voiceover.py
+generate_images.py
+run-demo.sh
+demo-script.md
+deploy.sh
+
+# IDE
+.vscode/
+.idea/

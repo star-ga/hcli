@@ -1,0 +1,2221 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Historia Clínica — Propuesta de Infraestructura Nacional · Guinea Ecuatorial</title>
+<meta name="description" content="Propuesta de infraestructura nacional de salud digital para Guinea Ecuatorial. Red nacional de memoria clínica offline, seguridad del paciente y federación ministerial. STARGA, Inc.">
+<meta name="author" content="STARGA Inc.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0F766E">
+<meta name="color-scheme" content="light">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        clinical: {
+          red: '#dc2626', amber: '#d97706', green: '#16a34a',
+          blue: '#2563eb', purple: '#7c3aed', teal: '#0d9488',
+        },
+        trust: {
+          50:  '#F0FDFA', 100: '#CCFBF1', 200: '#99F6E4',
+          300: '#5EEAD4', 400: '#2DD4BF', 500: '#14B8A6',
+          600: '#0F766E', 700: '#115E59', 800: '#134E4A', 900: '#042F2E',
+        },
+        premium: { 400: '#38BDF8', 600: '#0369A1', 800: '#075985' },
+        surface: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0' }
+      },
+      fontFamily: {
+        serif:     ['Fraunces', 'Newsreader', 'Georgia', 'serif'],
+        display:   ['Lexend', '"Source Sans 3"', 'Inter', 'system-ui', 'sans-serif'],
+        sans:      ['"Source Sans 3"', 'Lexend', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        mono:      ['"JetBrains Mono"', 'Fira Code', 'monospace'],
+      },
+      boxShadow: {
+        soft:    '0 1px 2px rgba(15,23,42,0.04), 0 4px 12px rgba(15,23,42,0.04)',
+        lift:    '0 1px 2px rgba(15,23,42,0.05), 0 8px 28px rgba(15,23,42,0.08)',
+        trust:   '0 1px 2px rgba(15,118,110,0.06), 0 8px 24px rgba(15,118,110,0.10)',
+        premium: '0 1px 2px rgba(3,105,161,0.05), 0 10px 32px rgba(3,105,161,0.10)',
+      }
+    }
+  }
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&family=Source+Sans+3:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html, body { overflow-x: hidden; max-width: 100vw; }
+  body {
+    background: #f8fafc;
+    font-family: "Source Sans 3", Inter, system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: #0f172a;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: Lexend, "Source Sans 3", system-ui, sans-serif;
+    letter-spacing: -0.012em;
+    color: #0f172a;
+  }
+  ::selection { background: rgba(15,118,110,0.20); color: #0f172a; }
+
+  /* Mobile overflow guards */
+  @media (max-width: 1023px) {
+    .flex > *, .grid > * { min-width: 0; }
+    p, li, td, dd, h2, h3, h4 { overflow-wrap: anywhere; }
+    pre { max-width: 100%; overflow-x: auto; }
+    code { word-break: break-word; overflow-wrap: anywhere; }
+  }
+
+  /* Cards */
+  .card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 4px 12px rgba(15,23,42,0.04);
+    transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+  }
+  .card:hover {
+    box-shadow: 0 1px 2px rgba(15,23,42,0.06), 0 12px 36px rgba(15,118,110,0.10);
+    transform: translateY(-2px);
+    border-color: #99F6E4;
+  }
+  .clinical-tile {
+    background: linear-gradient(180deg, #F0FDFA 0%, #ffffff 35%);
+    border-color: #99F6E4;
+  }
+
+  /* Kicker */
+  .section-kicker {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.18em;
+    text-transform: uppercase; color: #0F766E;
+    text-align: center; margin-bottom: 0.5rem;
+  }
+  .section-kicker::before, .section-kicker::after {
+    content: "";
+    display: inline-block; width: 1.25rem; height: 1px;
+    background: linear-gradient(90deg, transparent, #99F6E4, transparent);
+    vertical-align: middle; margin: 0 0.5rem;
+  }
+
+  /* Nav */
+  .nav-light {
+    background: rgba(248,250,252,0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Timeline */
+  .timeline-line {
+    position: absolute; left: 50%; top: 0; bottom: 0;
+    width: 2px; background: linear-gradient(180deg, #0F766E, #0369A1);
+    transform: translateX(-50%);
+  }
+  @media (max-width: 767px) {
+    .timeline-line { left: 1.5rem; }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #f1f5f9; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+  /* Scroll progress */
+  @keyframes scroll-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  .scroll-progress {
+    position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 60;
+    background: linear-gradient(90deg, #0F766E 0%, #0369A1 100%);
+    transform-origin: 0 50%; transform: scaleX(0);
+  }
+  @supports (animation-timeline: scroll()) {
+    .scroll-progress {
+      animation: scroll-progress linear;
+      animation-timeline: scroll(root);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-progress { animation: none !important; transform: scaleX(0); }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Section reveal */
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes section-reveal {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @supports (animation-timeline: view()) {
+      section[id] {
+        animation: section-reveal linear both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 80%;
+      }
+      @media (max-width: 767px) {
+        section[id] { animation: none !important; opacity: 1 !important; }
+      }
+    }
+  }
+
+  /* Stat numbers — clamp to shrink on phones */
+  .stat-num {
+    font-size: clamp(1.75rem, 5vw, 3rem);
+    font-family: Lexend, system-ui, sans-serif;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+  .hero-title {
+    font-size: clamp(1.6rem, 5vw, 3.25rem);
+    line-height: 1.12;
+    font-weight: 800;
+  }
+  .hero-sub {
+    font-size: clamp(1rem, 2.5vw, 1.25rem);
+  }
+
+  /* TOC sidebar */
+  .toc-link {
+    display: block; font-size: 0.78rem; padding: 0.35rem 0.6rem;
+    color: #475569; border-left: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+    line-height: 1.4;
+  }
+  .toc-link:hover, .toc-link.active {
+    color: #0F766E; border-left-color: #0F766E;
+  }
+
+  /* Layer stack diagram */
+  .layer-block {
+    border-radius: 0.5rem;
+    padding: 0.65rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+
+  /* Color swatches */
+  .swatch {
+    display: inline-block; width: 1rem; height: 1rem;
+    border-radius: 0.2rem; border: 1px solid rgba(0,0,0,0.1);
+    vertical-align: middle; margin-right: 0.3rem;
+  }
+
+  /* Print */
+  @media print {
+    .nav-light, .scroll-progress, aside { display: none !important; }
+    body { background: white; }
+  }
+</style>
+</head>
+<body class="font-sans text-slate-700 antialiased">
+
+<div class="scroll-progress" aria-hidden="true"></div>
+
+<!-- ═══════════════════════════════════════════════════════════ NAV -->
+<nav class="nav-light fixed top-0 left-0 right-0 z-50 border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-4">
+    <div class="flex items-center justify-between h-14">
+      <a href="demo.html" class="flex items-center gap-2.5 hover:opacity-80 transition-opacity" aria-label="Historia Clínica — demo">
+        <svg viewBox="0 0 32 32" class="h-8 w-8 flex-shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="32" height="32" rx="8" fill="#0F766E"/>
+          <path d="M9 16h14M16 9v14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+        <span class="font-display font-bold text-lg text-slate-900 tracking-tight">Historia Clínica</span>
+      </a>
+      <div class="flex items-center gap-3">
+        <a href="demo.html"
+           class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-trust-700 bg-trust-50 border border-trust-200 hover:bg-trust-100 transition-colors">
+          ← Demo en vivo
+        </a>
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+          Guinea Ecuatorial
+        </span>
+        <button id="nav-hamburger" class="p-2 rounded-lg hover:bg-slate-100 transition-colors sm:hidden"
+                aria-label="Menú" aria-expanded="false">
+          <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- Mobile menu -->
+  <div id="mobile-nav" class="hidden border-t border-slate-200 bg-white shadow-lift">
+    <div class="max-w-7xl mx-auto px-4 py-2 flex flex-col text-sm text-slate-600">
+      <a href="demo.html" class="py-2.5 px-3 rounded-lg hover:bg-slate-50 font-medium text-trust-700">← Demo en vivo</a>
+      <a href="#resumen" class="py-2.5 px-3 rounded-lg hover:bg-slate-50">Resumen Ejecutivo</a>
+      <a href="#posicionamiento" class="py-2.5 px-3 rounded-lg hover:bg-slate-50">Posicionamiento</a>
+      <a href="#relacion-snis" class="py-2.5 px-3 rounded-lg hover:bg-slate-50">Relación SNIS</a>
+      <a href="#arquitectura" class="py-2.5 px-3 rounded-lg hover:bg-slate-50">Arquitectura Nacional</a>
+      <a href="#dispositivos" class="py-2.5 px-3 rounded-lg hover:bg-slate-50">Estrategia de Dispositivos</a>
+      <a href="#telefonos" class="py-2.5 px-3 rounded-lg hover:bg-slate-50">Teléfonos y Tabletas</a>
+      <a href="#base-datos" class="py-2.5 px-3 rounded-lg hover:bg-slate-50">Base de Datos Local</a>
+      <a href="#federacion" class="py-2.5 px-3 rounded-lg hover:bg-slate-50">Protocolo de Federación</a>
+      <a href="#medicamentos" class="py-2.5 px-3 rounded-lg hover:bg-slate-50">Base de Medicamentos</a>
+      <a href="#bitnet" class="py-2.5 px-3 rounded-lg hover:bg-slate-50">Modelo BitNet</a>
+      <a href="#gateway" class="py-2.5 px-3 rounded-lg hover:bg-slate-50">Gateway Ministerial</a>
+      <a href="#dhis2" class="py-2.5 px-3 rounded-lg hover:bg-slate-50">SNIS y DHIS2</a>
+      <a href="#despliegue" class="py-2.5 px-3 rounded-lg hover:bg-slate-50">Plan de Despliegue</a>
+      <a href="#seguridad" class="py-2.5 px-3 rounded-lg hover:bg-slate-50">Seguridad</a>
+      <a href="#roles" class="py-2.5 px-3 rounded-lg hover:bg-slate-50">Roles</a>
+      <a href="#formacion" class="py-2.5 px-3 rounded-lg hover:bg-slate-50">Formación</a>
+      <a href="#valor" class="py-2.5 px-3 rounded-lg hover:bg-slate-50">Propuesta de Valor</a>
+      <a href="#stack" class="py-2.5 px-3 rounded-lg hover:bg-slate-50">Arquitectura Final</a>
+      <a href="#conclusion" class="py-2.5 px-3 rounded-lg hover:bg-slate-50">Conclusión</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════ HERO -->
+<section class="relative pt-28 pb-20 px-4 overflow-hidden bg-gradient-to-br from-trust-800 via-trust-700 to-premium-800">
+  <!-- Background pattern -->
+  <div class="absolute inset-0 opacity-10" aria-hidden="true">
+    <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+        <path d="M40 0L0 0 0 40" fill="none" stroke="white" stroke-width="0.5"/>
+      </pattern></defs>
+      <rect width="100%" height="100%" fill="url(#grid)"/>
+    </svg>
+  </div>
+
+  <div class="relative max-w-5xl mx-auto text-center">
+    <!-- Badge institucional -->
+    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 border border-white/25 text-white/90 text-xs font-semibold tracking-widest uppercase mb-6 backdrop-blur-sm">
+      <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 7l2.55 2.4A1 1 0 0116 11H6a3 3 0 01-3-3V6z" clip-rule="evenodd"/></svg>
+      Documento de Propuesta · República de Guinea Ecuatorial
+    </div>
+
+    <h1 class="hero-title text-white font-display mb-6">
+      Historia Clínica<br>
+      <span class="text-trust-300">Red Nacional de Memoria Clínica</span>
+    </h1>
+
+    <p class="hero-sub text-trust-100 max-w-3xl mx-auto mb-10 leading-relaxed">
+      Infraestructura soberana de registro clínico electrónico para Guinea Ecuatorial.
+      Cada clínica: un nodo local autónomo. Funciona completamente sin conexión a internet.
+      Integra con el Ministerio de Sanidad y Bienestar Social, el SNIS y DHIS2
+      sin reemplazarlos.
+    </p>
+
+    <!-- Stats strip -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto">
+      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/15">
+        <div class="stat-num text-white">100%</div>
+        <div class="text-trust-200 text-xs mt-1 font-medium">Operación offline</div>
+      </div>
+      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/15">
+        <div class="stat-num text-white">6</div>
+        <div class="text-trust-200 text-xs mt-1 font-medium">Capas de seguridad</div>
+      </div>
+      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/15">
+        <div class="stat-num text-white">Ed25519</div>
+        <div class="text-trust-200 text-xs mt-1 font-medium">Firma de cada acción</div>
+      </div>
+      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/15">
+        <div class="stat-num text-white">FHIR</div>
+        <div class="text-trust-200 text-xs mt-1 font-medium">Estándar internacional</div>
+      </div>
+    </div>
+
+    <!-- CTA scroll -->
+    <div class="mt-10">
+      <a href="#resumen" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-trust-800 font-semibold text-sm hover:bg-trust-50 transition-colors shadow-lift">
+        Leer propuesta completa
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ LAYOUT: TOC + CONTENT -->
+<div class="max-w-7xl mx-auto px-4 py-12 lg:flex lg:gap-10">
+
+  <!-- Sidebar TOC (hidden on mobile) -->
+  <aside class="hidden lg:block lg:w-56 xl:w-64 flex-shrink-0">
+    <div class="sticky top-20">
+      <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 px-2">Contenido</p>
+      <nav aria-label="Tabla de contenidos">
+        <a href="#resumen"        class="toc-link">1. Resumen Ejecutivo</a>
+        <a href="#posicionamiento" class="toc-link">2. Posicionamiento</a>
+        <a href="#relacion-snis"  class="toc-link">3. Relación SNIS / DHIS2</a>
+        <a href="#arquitectura"   class="toc-link">4. Arquitectura Nacional</a>
+        <a href="#dispositivos"   class="toc-link">5. Estrategia de Dispositivos</a>
+        <a href="#telefonos"      class="toc-link">6. Teléfonos y Tabletas</a>
+        <a href="#base-datos"     class="toc-link">7. Base de Datos Local</a>
+        <a href="#federacion"     class="toc-link">8. Protocolo de Federación</a>
+        <a href="#medicamentos"   class="toc-link">9. Base de Medicamentos</a>
+        <a href="#bitnet"         class="toc-link">10. Modelo BitNet</a>
+        <a href="#gateway"        class="toc-link">11. Gateway Ministerial</a>
+        <a href="#dhis2"          class="toc-link">12. SNIS y DHIS2</a>
+        <a href="#despliegue"     class="toc-link">13. Plan de Despliegue</a>
+        <a href="#seguridad"      class="toc-link">14. Seguridad</a>
+        <a href="#roles"          class="toc-link">15. Roles de Usuario</a>
+        <a href="#formacion"      class="toc-link">16. Plan de Formación</a>
+        <a href="#valor"          class="toc-link">17. Propuesta de Valor</a>
+        <a href="#stack"          class="toc-link">18. Arquitectura Final</a>
+        <a href="#conclusion"     class="toc-link">19. Conclusión</a>
+      </nav>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="flex-1 min-w-0 space-y-16">
+
+<!-- ═══════════════════════════════════════════════════════════ §1 RESUMEN EJECUTIVO -->
+<section id="resumen" class="scroll-mt-20">
+  <div class="section-kicker">Sección 1</div>
+  <h2 class="text-2xl sm:text-3xl font-bold text-center mb-8">Resumen Ejecutivo</h2>
+
+  <div class="card clinical-tile p-6 sm:p-8 mb-6">
+    <p class="text-lg leading-relaxed text-slate-700 mb-4">
+      <strong class="text-trust-700">Historia Clínica</strong> es la red nacional de memoria clínica
+      electrónica para Guinea Ecuatorial. Cada establecimiento sanitario — desde el puesto de salud
+      rural hasta el hospital regional — opera como un <strong>nodo local autónomo</strong> con base
+      de datos propia, firmada criptográficamente y auditada en tiempo real.
+    </p>
+    <p class="text-lg leading-relaxed text-slate-700 mb-4">
+      El sistema funciona <strong>completamente sin conexión a internet</strong>. Los médicos,
+      enfermeros y farmacéuticos acceden a la historia del paciente, reciben alertas de seguridad
+      farmacológica y registran cada acto clínico aunque la conectividad sea nula o intermitente,
+      situación habitual en la geografía continental e insular del país.
+    </p>
+    <p class="text-lg leading-relaxed text-slate-700">
+      Historia Clínica <strong>no reemplaza</strong> el SNIS ni DHIS2. Es una capa de registro
+      clínico individual que alimenta esos sistemas con datos agregados y desanonimizados,
+      fortaleciendo la cadena de información sanitaria nacional sin duplicar infraestructura.
+    </p>
+  </div>
+
+  <!-- Key principles grid -->
+  <div class="grid sm:grid-cols-3 gap-4">
+    <div class="card p-5">
+      <div class="w-10 h-10 rounded-lg bg-trust-50 border border-trust-200 flex items-center justify-center mb-3">
+        <svg class="w-5 h-5 text-trust-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+        </svg>
+      </div>
+      <h3 class="font-bold text-slate-900 mb-1">Soberanía de datos</h3>
+      <p class="text-sm text-slate-600">Los datos clínicos permanecen en el nodo de la clínica.
+         Ningún dato de salud personal abandona el establecimiento sin una compuerta
+         ministerial de anonimización.</p>
+    </div>
+    <div class="card p-5">
+      <div class="w-10 h-10 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center mb-3">
+        <svg class="w-5 h-5 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+      </div>
+      <h3 class="font-bold text-slate-900 mb-1">Auditoría inmutable</h3>
+      <p class="text-sm text-slate-600">Cada acción clínica genera un evento firmado con Ed25519,
+         encadenado por SHA-256. Imposible modificar sin dejar rastro detectable.</p>
+    </div>
+    <div class="card p-5">
+      <div class="w-10 h-10 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center mb-3">
+        <svg class="w-5 h-5 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+      </div>
+      <h3 class="font-bold text-slate-900 mb-1">Seguridad farmacológica</h3>
+      <p class="text-sm text-slate-600">Canal de 6 capas con verificación BitNet offline detecta
+         interacciones, contraindicaciones y alertas de seguridad antes de que el
+         medicamento llegue al paciente.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ §2 POSICIONAMIENTO -->
+<section id="posicionamiento" class="scroll-mt-20">
+  <div class="section-kicker">Sección 2</div>
+  <h2 class="text-2xl sm:text-3xl font-bold text-center mb-2">Posicionamiento Estratégico</h2>
+  <p class="text-center text-slate-500 mb-8 text-sm">Qué es Historia Clínica y qué no es</p>
+
+  <div class="grid md:grid-cols-2 gap-6">
+    <!-- Es -->
+    <div class="card p-6 border-trust-200 bg-gradient-to-b from-trust-50 to-white">
+      <div class="flex items-center gap-2 mb-5">
+        <div class="w-7 h-7 rounded-full bg-trust-600 flex items-center justify-center flex-shrink-0">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+        <h3 class="font-bold text-trust-800 text-lg">Historia Clínica ES</h3>
+      </div>
+      <ul class="space-y-3">
+        <li class="flex gap-2.5 text-sm text-slate-700">
+          <span class="w-1.5 h-1.5 rounded-full bg-trust-500 mt-1.5 flex-shrink-0"></span>
+          Una <strong>capa de registro clínico individual</strong> con historia por paciente,
+          alertas de seguridad y auditoría criptográfica
+        </li>
+        <li class="flex gap-2.5 text-sm text-slate-700">
+          <span class="w-1.5 h-1.5 rounded-full bg-trust-500 mt-1.5 flex-shrink-0"></span>
+          Un sistema que funciona <strong>100% offline</strong> en cada establecimiento sanitario
+        </li>
+        <li class="flex gap-2.5 text-sm text-slate-700">
+          <span class="w-1.5 h-1.5 rounded-full bg-trust-500 mt-1.5 flex-shrink-0"></span>
+          Una <strong>red federada de nodos</strong> locales que comparte conocimiento
+          clínico desidentificado bajo supervisión ministerial
+        </li>
+        <li class="flex gap-2.5 text-sm text-slate-700">
+          <span class="w-1.5 h-1.5 rounded-full bg-trust-500 mt-1.5 flex-shrink-0"></span>
+          Un <strong>complemento de SNIS / DHIS2</strong>: exporta agregados estadísticos
+          para alimentar los sistemas nacionales existentes
+        </li>
+        <li class="flex gap-2.5 text-sm text-slate-700">
+          <span class="w-1.5 h-1.5 rounded-full bg-trust-500 mt-1.5 flex-shrink-0"></span>
+          Una herramienta de <strong>soberanía digital nacional</strong>:
+          datos en territorio, sin dependencia de nubes externas
+        </li>
+        <li class="flex gap-2.5 text-sm text-slate-700">
+          <span class="w-1.5 h-1.5 rounded-full bg-trust-500 mt-1.5 flex-shrink-0"></span>
+          Compatible con <strong>FHIR R4</strong>, RxNorm, SNOMED CT y UMLS
+          para interoperabilidad internacional
+        </li>
+      </ul>
+    </div>
+
+    <!-- No es -->
+    <div class="card p-6 border-red-200 bg-gradient-to-b from-red-50 to-white">
+      <div class="flex items-center gap-2 mb-5">
+        <div class="w-7 h-7 rounded-full bg-clinical-red flex items-center justify-center flex-shrink-0">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </div>
+        <h3 class="font-bold text-red-800 text-lg">Historia Clínica NO ES</h3>
+      </div>
+      <ul class="space-y-3">
+        <li class="flex gap-2.5 text-sm text-slate-700">
+          <span class="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 flex-shrink-0"></span>
+          Un reemplazo del <strong>SNIS ni de DHIS2</strong>: ambos sistemas continúan
+          operando con sus propias bases y flujos
+        </li>
+        <li class="flex gap-2.5 text-sm text-slate-700">
+          <span class="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 flex-shrink-0"></span>
+          Un sistema de <strong>nube centralizada</strong>: no existe un servidor
+          central con datos de pacientes individuales
+        </li>
+        <li class="flex gap-2.5 text-sm text-slate-700">
+          <span class="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 flex-shrink-0"></span>
+          Un <strong>sistema de diagnóstico automático</strong>: el modelo BitNet
+          asiste al profesional sanitario, no lo sustituye
+        </li>
+        <li class="flex gap-2.5 text-sm text-slate-700">
+          <span class="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 flex-shrink-0"></span>
+          Una aplicación que <strong>requiere internet</strong> para su funcionamiento
+          clínico cotidiano
+        </li>
+        <li class="flex gap-2.5 text-sm text-slate-700">
+          <span class="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 flex-shrink-0"></span>
+          Una plataforma <strong>dependiente de proveedores extranjeros</strong>
+          para su operación diaria
+        </li>
+        <li class="flex gap-2.5 text-sm text-slate-700">
+          <span class="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 flex-shrink-0"></span>
+          Un sustituto de la <strong>responsabilidad clínica del profesional</strong>:
+          toda decisión médica recae en el facultativo
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ §3 RELACIÓN SNIS -->
+<section id="relacion-snis" class="scroll-mt-20">
+  <div class="section-kicker">Sección 3</div>
+  <h2 class="text-2xl sm:text-3xl font-bold text-center mb-2">
+    Relación con la Infraestructura Sanitaria de Guinea Ecuatorial
+  </h2>
+  <p class="text-center text-slate-500 mb-8 text-sm">
+    Ministerio de Sanidad y Bienestar Social · SNIS · DHIS2
+  </p>
+
+  <div class="card clinical-tile p-6 sm:p-8 mb-6">
+    <p class="text-base text-slate-700 leading-relaxed mb-4">
+      El <strong>Ministerio de Sanidad y Bienestar Social</strong> de Guinea Ecuatorial es la
+      autoridad rectora del sistema nacional de salud. Historia Clínica opera bajo su supervisión
+      directa y le otorga capacidades nuevas sin desplazar las estructuras existentes.
+    </p>
+    <p class="text-base text-slate-700 leading-relaxed">
+      El <strong>Sistema Nacional de Información en Salud (SNIS)</strong> y su plataforma de
+      reporte estadístico <strong>DHIS2</strong> reciben exportaciones agregadas y
+      desanonimizadas procedentes de los nodos clínicos. Historia Clínica actúa como la
+      fuente de datos clínicos granulares que alimenta esos sistemas, cerrando el vacío
+      entre el acto clínico individual y el reporte epidemiológico nacional.
+    </p>
+  </div>
+
+  <div class="grid sm:grid-cols-3 gap-4">
+    <div class="card p-5">
+      <div class="w-10 h-10 rounded-lg bg-purple-50 border border-purple-200 flex items-center justify-center mb-3">
+        <svg class="w-5 h-5 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+        </svg>
+      </div>
+      <h3 class="font-bold text-slate-900 mb-1 text-sm">Ministerio de Sanidad</h3>
+      <p class="text-xs text-slate-600">Autoridad certificadora de nodos. Aprueba incorporaciones,
+         revoca nodos comprometidos y recibe informes de auditoría consolidados
+         de toda la red nacional.</p>
+    </div>
+    <div class="card p-5">
+      <div class="w-10 h-10 rounded-lg bg-trust-50 border border-trust-200 flex items-center justify-center mb-3">
+        <svg class="w-5 h-5 text-trust-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+      <h3 class="font-bold text-slate-900 mb-1 text-sm">SNIS</h3>
+      <p class="text-xs text-slate-600">Recibe exportaciones periódicas de indicadores de
+         salud agregados. Historia Clínica mejora la cobertura, completitud y
+         oportunidad de los datos del SNIS sin modificar sus flujos actuales.</p>
+    </div>
+    <div class="card p-5">
+      <div class="w-10 h-10 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center mb-3">
+        <svg class="w-5 h-5 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+        </svg>
+      </div>
+      <h3 class="font-bold text-slate-900 mb-1 text-sm">DHIS2</h3>
+      <p class="text-xs text-slate-600">Los datos de Historia Clínica se exportan en formatos
+         compatibles con DHIS2. Los equipos de salud pública continúan usando
+         DHIS2 como plataforma de análisis epidemiológico sin cambios.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ §4 ARQUITECTURA NACIONAL -->
+<section id="arquitectura" class="scroll-mt-20">
+  <div class="section-kicker">Sección 4</div>
+  <h2 class="text-2xl sm:text-3xl font-bold text-center mb-2">Arquitectura Nacional</h2>
+  <p class="text-center text-slate-500 mb-8 text-sm">
+    Cuatro niveles jerárquicos · Flujo de autoridad descendente · Datos clínicos locales
+  </p>
+
+  <!-- Layered diagram -->
+  <div class="card p-6 sm:p-8">
+    <div class="space-y-3 max-w-xl mx-auto">
+
+      <!-- Nivel 1: Gateway Ministerial -->
+      <div class="layer-block text-white font-semibold"
+           style="background: linear-gradient(135deg,#0F766E,#115E59); border-color:#0d9488;">
+        <div class="text-xs font-bold uppercase tracking-widest opacity-75 mb-0.5">Nivel 1</div>
+        Gateway Ministerial
+        <div class="text-xs font-normal opacity-80 mt-0.5">
+          Ministerio de Sanidad · Autoridad certificadora · Registro de nodos · Revocación
+        </div>
+      </div>
+      <!-- Arrow -->
+      <div class="flex justify-center">
+        <div class="flex flex-col items-center gap-0.5">
+          <div class="w-0.5 h-4 bg-slate-300"></div>
+          <svg class="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M5.293 9.293a1 1 0 011.414 0L10 12.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Nivel 2: Nodos Regionales -->
+      <div class="layer-block text-white font-semibold"
+           style="background: linear-gradient(135deg,#0369A1,#075985); border-color:#0369a1;">
+        <div class="text-xs font-bold uppercase tracking-widest opacity-75 mb-0.5">Nivel 2</div>
+        Nodos Regionales
+        <div class="text-xs font-normal opacity-80 mt-0.5">
+          Hospitales regionales · Sincronización entre clínicas · Agregación estadística regional
+        </div>
+      </div>
+      <!-- Arrow -->
+      <div class="flex justify-center">
+        <div class="flex flex-col items-center gap-0.5">
+          <div class="w-0.5 h-4 bg-slate-300"></div>
+          <svg class="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M5.293 9.293a1 1 0 011.414 0L10 12.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Nivel 3: Nodos de Clínica -->
+      <div class="layer-block text-white font-semibold"
+           style="background: linear-gradient(135deg,#7c3aed,#6d28d9); border-color:#7c3aed;">
+        <div class="text-xs font-bold uppercase tracking-widest opacity-75 mb-0.5">Nivel 3</div>
+        Nodos de Clínica
+        <div class="text-xs font-normal opacity-80 mt-0.5">
+          Raspberry Pi / mini-PC · Base de datos local · Funciona sin internet · Firma Ed25519
+        </div>
+      </div>
+      <!-- Arrow -->
+      <div class="flex justify-center">
+        <div class="flex flex-col items-center gap-0.5">
+          <div class="w-0.5 h-4 bg-slate-300"></div>
+          <svg class="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M5.293 9.293a1 1 0 011.414 0L10 12.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Nivel 4: Interfaz de usuario -->
+      <div class="layer-block text-slate-800 font-semibold"
+           style="background: linear-gradient(135deg,#fef9c3,#fef3c7); border-color:#fde68a;">
+        <div class="text-xs font-bold uppercase tracking-widest opacity-60 mb-0.5">Nivel 4</div>
+        Teléfono / Tableta (Interfaz)
+        <div class="text-xs font-normal opacity-70 mt-0.5">
+          Solo interfaz de usuario · NUNCA la base de datos maestra ·
+          Conectado al nodo de la clínica por Wi-Fi local
+        </div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="mt-6 pt-5 border-t border-slate-100 flex flex-wrap gap-4 justify-center text-xs text-slate-500">
+      <span class="flex items-center gap-1.5">
+        <span class="w-3 h-3 rounded-sm inline-block" style="background:#0F766E"></span>
+        Autoridad ministerial
+      </span>
+      <span class="flex items-center gap-1.5">
+        <span class="w-3 h-3 rounded-sm inline-block" style="background:#0369A1"></span>
+        Coordinación regional
+      </span>
+      <span class="flex items-center gap-1.5">
+        <span class="w-3 h-3 rounded-sm inline-block" style="background:#7c3aed"></span>
+        Registro clínico local
+      </span>
+      <span class="flex items-center gap-1.5">
+        <span class="w-3 h-3 rounded-sm inline-block" style="background:#fde68a; border:1px solid #d97706"></span>
+        Interfaz de acceso
+      </span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ §5 DISPOSITIVOS -->
+<section id="dispositivos" class="scroll-mt-20">
+  <div class="section-kicker">Sección 5</div>
+  <h2 class="text-2xl sm:text-3xl font-bold text-center mb-2">Estrategia de Dispositivos</h2>
+  <p class="text-center text-slate-500 mb-8 text-sm">
+    Tres clases según el volumen y contexto del establecimiento
+  </p>
+
+  <div class="grid sm:grid-cols-3 gap-5">
+    <!-- Clase A -->
+    <div class="card p-6 border-trust-200">
+      <div class="flex items-center justify-between mb-4">
+        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-trust-100 text-trust-800 border border-trust-200">
+          Clase A
+        </span>
+        <span class="text-xs text-slate-400 font-medium">Clínica rural</span>
+      </div>
+      <div class="text-center mb-4">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-trust-50 border-2 border-trust-200 flex items-center justify-center">
+          <svg class="w-8 h-8 text-trust-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+          </svg>
+        </div>
+        <div class="mt-2 font-mono text-sm font-bold text-trust-700">Raspberry Pi Zero 2 W</div>
+      </div>
+      <ul class="space-y-2 text-xs text-slate-600">
+        <li class="flex gap-2"><span class="text-trust-500 font-bold">·</span> CPU quad-core ARM Cortex-A53</li>
+        <li class="flex gap-2"><span class="text-trust-500 font-bold">·</span> 512 MB RAM</li>
+        <li class="flex gap-2"><span class="text-trust-500 font-bold">·</span> microSD 64 GB (base de datos local)</li>
+        <li class="flex gap-2"><span class="text-trust-500 font-bold">·</span> Wi-Fi integrado (red local clínica)</li>
+        <li class="flex gap-2"><span class="text-trust-500 font-bold">·</span> Alimentación USB-C o solar</li>
+        <li class="flex gap-2"><span class="text-trust-500 font-bold">·</span> Coste unitario ~15 USD</li>
+      </ul>
+      <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500">
+        <strong>Ideal para:</strong> puesto de salud rural, dispensario comunal,
+        hasta ~200 pacientes registrados.
+      </div>
+    </div>
+
+    <!-- Clase B -->
+    <div class="card p-6 border-blue-200">
+      <div class="flex items-center justify-between mb-4">
+        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">
+          Clase B
+        </span>
+        <span class="text-xs text-slate-400 font-medium">Clínica estándar</span>
+      </div>
+      <div class="text-center mb-4">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-blue-50 border-2 border-blue-200 flex items-center justify-center">
+          <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
+          </svg>
+        </div>
+        <div class="mt-2 font-mono text-sm font-bold text-blue-700">Raspberry Pi 4 / Pi 5</div>
+      </div>
+      <ul class="space-y-2 text-xs text-slate-600">
+        <li class="flex gap-2"><span class="text-blue-500 font-bold">·</span> CPU quad-core ARM Cortex-A72/A76</li>
+        <li class="flex gap-2"><span class="text-blue-500 font-bold">·</span> 4–8 GB RAM</li>
+        <li class="flex gap-2"><span class="text-blue-500 font-bold">·</span> SSD 256 GB–1 TB</li>
+        <li class="flex gap-2"><span class="text-blue-500 font-bold">·</span> Wi-Fi + Ethernet Gigabit</li>
+        <li class="flex gap-2"><span class="text-blue-500 font-bold">·</span> Múltiples interfaces simultáneas</li>
+        <li class="flex gap-2"><span class="text-blue-500 font-bold">·</span> Coste unitario ~80–100 USD</li>
+      </ul>
+      <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500">
+        <strong>Ideal para:</strong> centro de salud distrital, clínica privada,
+        hasta ~2.000 pacientes registrados.
+      </div>
+    </div>
+
+    <!-- Clase C -->
+    <div class="card p-6 border-purple-200">
+      <div class="flex items-center justify-between mb-4">
+        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200">
+          Clase C
+        </span>
+        <span class="text-xs text-slate-400 font-medium">Hospital / Regional</span>
+      </div>
+      <div class="text-center mb-4">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-purple-50 border-2 border-purple-200 flex items-center justify-center">
+          <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+          </svg>
+        </div>
+        <div class="mt-2 font-mono text-sm font-bold text-purple-700">Mini-PC / Servidor x86</div>
+      </div>
+      <ul class="space-y-2 text-xs text-slate-600">
+        <li class="flex gap-2"><span class="text-purple-500 font-bold">·</span> CPU x86-64 de 8–16 núcleos</li>
+        <li class="flex gap-2"><span class="text-purple-500 font-bold">·</span> 16–64 GB RAM con ECC</li>
+        <li class="flex gap-2"><span class="text-purple-500 font-bold">·</span> SSD NVMe RAID (1–4 TB)</li>
+        <li class="flex gap-2"><span class="text-purple-500 font-bold">·</span> Nodo de coordinación regional</li>
+        <li class="flex gap-2"><span class="text-purple-500 font-bold">·</span> UPS integrado</li>
+        <li class="flex gap-2"><span class="text-purple-500 font-bold">·</span> Coste unitario ~400–800 USD</li>
+      </ul>
+      <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500">
+        <strong>Ideal para:</strong> hospital provincial, nodo regional de federación,
+        más de 10.000 pacientes registrados.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ §6 TELÉFONOS -->
+<section id="telefonos" class="scroll-mt-20">
+  <div class="section-kicker">Sección 6</div>
+  <h2 class="text-2xl sm:text-3xl font-bold text-center mb-2">
+    Rol de Teléfonos y Tabletas
+  </h2>
+  <p class="text-center text-slate-500 mb-8 text-sm">
+    Interfaz de acceso · Nunca la base de datos maestra
+  </p>
+
+  <div class="grid md:grid-cols-2 gap-6">
+    <div class="card clinical-tile p-6">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-trust-100 border border-trust-200 flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 text-trust-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <h3 class="font-bold text-trust-800">Lo que el teléfono SÍ hace</h3>
+      </div>
+      <ul class="space-y-2 text-sm text-slate-700">
+        <li class="flex gap-2.5"><span class="text-trust-500 mt-0.5">✓</span>
+          Muestra la historia clínica del paciente en pantalla</li>
+        <li class="flex gap-2.5"><span class="text-trust-500 mt-0.5">✓</span>
+          Recoge datos del profesional (formularios, prescripciones, diagnósticos)</li>
+        <li class="flex gap-2.5"><span class="text-trust-500 mt-0.5">✓</span>
+          Presenta alertas de seguridad farmacológica</li>
+        <li class="flex gap-2.5"><span class="text-trust-500 mt-0.5">✓</span>
+          Transmite instrucciones al nodo de la clínica por Wi-Fi local</li>
+        <li class="flex gap-2.5"><span class="text-trust-500 mt-0.5">✓</span>
+          Funciona sin acceso a internet (solo necesita la red Wi-Fi interna)</li>
+        <li class="flex gap-2.5"><span class="text-trust-500 mt-0.5">✓</span>
+          Valida credenciales del profesional con el nodo local</li>
+      </ul>
+    </div>
+
+    <div class="card p-6 border-amber-200 bg-gradient-to-b from-amber-50 to-white">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+        <h3 class="font-bold text-amber-800">Lo que el teléfono NO hace</h3>
+      </div>
+      <ul class="space-y-2 text-sm text-slate-700">
+        <li class="flex gap-2.5"><span class="text-red-500 mt-0.5">✗</span>
+          Almacenar la base de datos maestra de pacientes</li>
+        <li class="flex gap-2.5"><span class="text-red-500 mt-0.5">✗</span>
+          Firmar eventos clínicos con clave de nodo</li>
+        <li class="flex gap-2.5"><span class="text-red-500 mt-0.5">✗</span>
+          Participar en la federación de nodos</li>
+        <li class="flex gap-2.5"><span class="text-red-500 mt-0.5">✗</span>
+          Operar como repositorio autoritativo de ningún paciente</li>
+        <li class="flex gap-2.5"><span class="text-red-500 mt-0.5">✗</span>
+          Comunicarse directamente con el Gateway Ministerial</li>
+        <li class="flex gap-2.5"><span class="text-red-500 mt-0.5">✗</span>
+          Reemplazar al nodo de clínica si este falla</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="mt-5 card p-5 bg-gradient-to-r from-slate-50 to-trust-50 border-trust-100">
+    <p class="text-sm text-slate-700 text-center">
+      <strong class="text-trust-700">Principio fundamental:</strong>
+      El nodo de la clínica (Raspberry Pi o mini-PC) es el único repositorio autoritativo.
+      El teléfono es una ventana de acceso, no un almacén. Si el teléfono se pierde,
+      roba o daña, los datos clínicos permanecen intactos en el nodo.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ §7 BASE DE DATOS LOCAL -->
+<section id="base-datos" class="scroll-mt-20">
+  <div class="section-kicker">Sección 7</div>
+  <h2 class="text-2xl sm:text-3xl font-bold text-center mb-2">
+    Diseño de Base de Datos Local
+  </h2>
+  <p class="text-center text-slate-500 mb-8 text-sm">
+    Seis archivos en el nodo de cada clínica · Integridad criptográfica garantizada
+  </p>
+
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="card p-5 border-trust-200 clinical-tile">
+      <div class="flex items-start gap-3 mb-3">
+        <div class="w-9 h-9 rounded-lg bg-trust-100 flex items-center justify-center flex-shrink-0">
+          <svg class="w-4.5 h-4.5 text-trust-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:1.1rem;height:1.1rem">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+          </svg>
+        </div>
+        <div>
+          <code class="text-xs font-mono font-bold text-trust-700">historia_state.db</code>
+          <p class="text-xs text-slate-500 mt-0.5">Estado actual del paciente</p>
+        </div>
+      </div>
+      <p class="text-xs text-slate-600 leading-relaxed">
+        Vista materializada y actualizada del estado clínico de cada paciente:
+        medicamentos activos, alergias, diagnósticos, constantes vitales y
+        última visita. Optimizada para lectura rápida en pantalla.
+      </p>
+    </div>
+
+    <div class="card p-5 border-blue-200 bg-gradient-to-b from-blue-50 to-white">
+      <div class="flex items-start gap-3 mb-3">
+        <div class="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+          <svg style="width:1.1rem;height:1.1rem" class="text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+        </div>
+        <div>
+          <code class="text-xs font-mono font-bold text-blue-700">historia_events.log</code>
+          <p class="text-xs text-slate-500 mt-0.5">Registro append-only de eventos</p>
+        </div>
+      </div>
+      <p class="text-xs text-slate-600 leading-relaxed">
+        Secuencia inmutable de todos los eventos clínicos, cada uno firmado con
+        Ed25519 y encadenado por SHA-256. Fuente de verdad para reconstruir
+        cualquier estado pasado y para la auditoría ministerial.
+      </p>
+    </div>
+
+    <div class="card p-5 border-amber-200 bg-gradient-to-b from-amber-50 to-white">
+      <div class="flex items-start gap-3 mb-3">
+        <div class="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+          <svg style="width:1.1rem;height:1.1rem" class="text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+        </div>
+        <div>
+          <code class="text-xs font-mono font-bold text-amber-700">historia_audit.db</code>
+          <p class="text-xs text-slate-500 mt-0.5">Cadena de auditoría</p>
+        </div>
+      </div>
+      <p class="text-xs text-slate-600 leading-relaxed">
+        Registro completo de todas las acciones de usuario: quién accedió, qué consultó,
+        qué modificó, cuándo y desde qué dispositivo. Estructura Merkle SHA-256.
+        No puede ser alterado sin que el hash raíz cambie.
+      </p>
+    </div>
+
+    <div class="card p-5 border-green-200 bg-gradient-to-b from-green-50 to-white">
+      <div class="flex items-start gap-3 mb-3">
+        <div class="w-9 h-9 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+          <svg style="width:1.1rem;height:1.1rem" class="text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+          </svg>
+        </div>
+        <div>
+          <code class="text-xs font-mono font-bold text-green-700">drug_core.db</code>
+          <p class="text-xs text-slate-500 mt-0.5">Base de medicamentos offline</p>
+        </div>
+      </div>
+      <p class="text-xs text-slate-600 leading-relaxed">
+        Catálogo farmacológico firmado con RxNorm, SNOMED CT y nombres locales
+        en español, francés e inglés. Incluye interacciones, contraindicaciones
+        y alertas de embarazo/pediátrico/renal. Actualizable por paquete firmado.
+      </p>
+    </div>
+
+    <div class="card p-5 border-purple-200 bg-gradient-to-b from-purple-50 to-white">
+      <div class="flex items-start gap-3 mb-3">
+        <div class="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+          <svg style="width:1.1rem;height:1.1rem" class="text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <div>
+          <code class="text-xs font-mono font-bold text-purple-700">bitnet_bundle</code>
+          <p class="text-xs text-slate-500 mt-0.5">Modelo de verificación local</p>
+        </div>
+      </div>
+      <p class="text-xs text-slate-600 leading-relaxed">
+        Pesos cuantizados del clasificador BitNet (148 KB total). Ejecuta inferencia
+        offline en Q16.16 punto fijo con reproducción bit-idéntica. Verificación
+        de interacciones farmacológicas sin conexión a ningún servidor externo.
+      </p>
+    </div>
+
+    <div class="card p-5 border-slate-200 bg-gradient-to-b from-slate-50 to-white">
+      <div class="flex items-start gap-3 mb-3">
+        <div class="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+          <svg style="width:1.1rem;height:1.1rem" class="text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+          </svg>
+        </div>
+        <div>
+          <code class="text-xs font-mono font-bold text-slate-600">snapshots/</code>
+          <p class="text-xs text-slate-500 mt-0.5">Copias de seguridad firmadas</p>
+        </div>
+      </div>
+      <p class="text-xs text-slate-600 leading-relaxed">
+        Instantáneas periódicas y firmadas del estado completo del nodo.
+        Permiten restauración verificable ante fallos de hardware.
+        Rotación automática con retención configurable por política ministerial.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ §8 PROTOCOLO DE FEDERACIÓN -->
+<section id="federacion" class="scroll-mt-20">
+  <div class="section-kicker">Sección 8</div>
+  <h2 class="text-2xl sm:text-3xl font-bold text-center mb-2">
+    Protocolo de Federación
+  </h2>
+  <p class="text-center text-slate-500 mb-8 text-sm">
+    Eventos firmados append-only · Sin sincronización por internet abierto
+  </p>
+
+  <!-- Event types -->
+  <div class="card p-6 sm:p-8 mb-6">
+    <h3 class="font-bold text-slate-800 mb-4 text-base">Tipos de eventos clínicos federados</h3>
+    <div class="grid sm:grid-cols-2 gap-3">
+      <div class="flex items-center gap-3 p-3 rounded-lg bg-trust-50 border border-trust-100">
+        <code class="text-xs font-mono font-bold text-trust-700 flex-shrink-0">PacienteCreado</code>
+        <span class="text-xs text-slate-600">Nuevo registro de paciente en el sistema</span>
+      </div>
+      <div class="flex items-center gap-3 p-3 rounded-lg bg-blue-50 border border-blue-100">
+        <code class="text-xs font-mono font-bold text-blue-700 flex-shrink-0">EncuentroCreado</code>
+        <span class="text-xs text-slate-600">Consulta, visita o acto clínico registrado</span>
+      </div>
+      <div class="flex items-center gap-3 p-3 rounded-lg bg-green-50 border border-green-100">
+        <code class="text-xs font-mono font-bold text-green-700 flex-shrink-0">MedicamentoAñadido</code>
+        <span class="text-xs text-slate-600">Prescripción nueva o modificada</span>
+      </div>
+      <div class="flex items-center gap-3 p-3 rounded-lg bg-amber-50 border border-amber-100">
+        <code class="text-xs font-mono font-bold text-amber-700 flex-shrink-0">AlergiaAñadida</code>
+        <span class="text-xs text-slate-600">Registro de alergia o reacción adversa</span>
+      </div>
+      <div class="flex items-center gap-3 p-3 rounded-lg bg-red-50 border border-red-100">
+        <code class="text-xs font-mono font-bold text-red-700 flex-shrink-0">AlertaSeguridadCreada</code>
+        <span class="text-xs text-slate-600">Interacción peligrosa o contraindicación detectada</span>
+      </div>
+      <div class="flex items-center gap-3 p-3 rounded-lg bg-purple-50 border border-purple-100">
+        <code class="text-xs font-mono font-bold text-purple-700 flex-shrink-0 text-xs">ConflictoDetectado / Resuelto</code>
+        <span class="text-xs text-slate-600">Divergencia entre nodos y su resolución</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reglas de federación -->
+  <div class="grid sm:grid-cols-3 gap-4">
+    <div class="card p-5 border-red-200 bg-red-50">
+      <div class="w-8 h-8 rounded-full bg-red-100 border border-red-200 flex items-center justify-center mb-3">
+        <svg class="w-4 h-4 text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+        </svg>
+      </div>
+      <h3 class="font-bold text-red-800 text-sm mb-1">Sin sync por internet abierto</h3>
+      <p class="text-xs text-slate-600">La sincronización entre nodos ocurre únicamente a través
+         de canales físicamente controlados: red interna, USB cifrado o
+         enlace VPN ministerial. Jamás por internet público.</p>
+    </div>
+    <div class="card p-5 border-trust-200 bg-trust-50">
+      <div class="w-8 h-8 rounded-full bg-trust-100 border border-trust-200 flex items-center justify-center mb-3">
+        <svg class="w-4 h-4 text-trust-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+        </svg>
+      </div>
+      <h3 class="font-bold text-trust-800 text-sm mb-1">Identidad firmada</h3>
+      <p class="text-xs text-slate-600">Cada nodo posee un par de claves Ed25519 registrado
+         en el Gateway Ministerial. Ningún evento se acepta sin firma válida
+         de un nodo certificado.</p>
+    </div>
+    <div class="card p-5 border-amber-200 bg-amber-50">
+      <div class="w-8 h-8 rounded-full bg-amber-100 border border-amber-200 flex items-center justify-center mb-3">
+        <svg class="w-4 h-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+        </svg>
+      </div>
+      <h3 class="font-bold text-amber-800 text-sm mb-1">Compuerta PHI</h3>
+      <p class="text-xs text-slate-600">Toda información de salud personal (PHI) pasa por un
+         proceso de anonimización verificable antes de cruzar el límite del
+         nodo de clínica. Los identificadores personales nunca se federan.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ §9 MEDICAMENTOS -->
+<section id="medicamentos" class="scroll-mt-20">
+  <div class="section-kicker">Sección 9</div>
+  <h2 class="text-2xl sm:text-3xl font-bold text-center mb-2">
+    Estrategia de Base de Datos de Medicamentos
+  </h2>
+  <p class="text-center text-slate-500 mb-8 text-sm">
+    Paquete offline firmado · Rutas de suministro regionales · Formulario nacional
+  </p>
+
+  <div class="card clinical-tile p-6 sm:p-8 mb-6">
+    <p class="text-base text-slate-700 leading-relaxed mb-4">
+      La base de datos farmacológica se distribuye como un <strong>paquete firmado centralizado</strong>
+      emitido por el Ministerio de Sanidad. Cada nodo verifica la firma Ed25519 antes de
+      instalar una actualización. No se acepta ningún paquete no firmado.
+    </p>
+    <p class="text-base text-slate-700 leading-relaxed">
+      Los medicamentos se indexan bajo <strong>RxNorm</strong> y <strong>SNOMED CT</strong>
+      con nombres en español, francés, inglés y denominaciones locales, reflejando las
+      rutas habituales de suministro: España, Francia, Camerún y Nigeria.
+    </p>
+  </div>
+
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+    <div class="card p-5">
+      <div class="text-2xl mb-2">🌍</div>
+      <h3 class="font-bold text-slate-800 text-sm mb-1">Multilingual</h3>
+      <p class="text-xs text-slate-600">Nombres en español, francés, inglés y denominaciones
+         comunes locales de Guinea Ecuatorial, Camerún y la subregión.</p>
+    </div>
+    <div class="card p-5">
+      <div class="text-2xl mb-2">🚚</div>
+      <h3 class="font-bold text-slate-800 text-sm mb-1">Rutas de suministro</h3>
+      <p class="text-xs text-slate-600">Marcas y presentaciones disponibles en las cadenas de
+         distribución de España, Francia, Camerún y Nigeria, adaptadas a la
+         realidad del mercado ecuatoguineano.</p>
+    </div>
+    <div class="card p-5">
+      <div class="text-2xl mb-2">⚠️</div>
+      <h3 class="font-bold text-slate-800 text-sm mb-1">Contraindicaciones completas</h3>
+      <p class="text-xs text-slate-600">Interacciones medicamentosas, contraindicaciones absolutas
+         y relativas, alertas de embarazo, pediátrico y ajuste renal.</p>
+    </div>
+    <div class="card p-5">
+      <div class="text-2xl mb-2">📋</div>
+      <h3 class="font-bold text-slate-800 text-sm mb-1">Formulario nacional</h3>
+      <p class="text-xs text-slate-600">Lista de medicamentos esenciales del formulario nacional
+         de Guinea Ecuatorial destacada visualmente para facilitar la
+         prescripción adecuada al contexto local.</p>
+    </div>
+    <div class="card p-5">
+      <div class="text-2xl mb-2">🔐</div>
+      <h3 class="font-bold text-slate-800 text-sm mb-1">Paquete firmado</h3>
+      <p class="text-xs text-slate-600">Cada actualización lleva firma Ed25519 del Ministerio.
+         Los nodos verifican la firma antes de instalar. Imposible
+         distribuir datos farmacológicos adulterados.</p>
+    </div>
+    <div class="card p-5">
+      <div class="text-2xl mb-2">📦</div>
+      <h3 class="font-bold text-slate-800 text-sm mb-1">Distribución offline</h3>
+      <p class="text-xs text-slate-600">Los paquetes pueden distribuirse por USB, tarjeta
+         microSD o sincronización puntual. No se requiere conexión permanente
+         a internet para mantener la base actualizada.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ §10 BITNET -->
+<section id="bitnet" class="scroll-mt-20">
+  <div class="section-kicker">Sección 10</div>
+  <h2 class="text-2xl sm:text-3xl font-bold text-center mb-2">
+    Rol del Modelo BitNet
+  </h2>
+  <p class="text-center text-slate-500 mb-8 text-sm">
+    Verificación · Extracción · Traducción offline · No es el médico legal
+  </p>
+
+  <div class="card clinical-tile p-6 sm:p-8 mb-6">
+    <p class="text-base text-slate-700 leading-relaxed mb-3">
+      El clasificador <strong>BitNet b1.58</strong> (50.949 parámetros, 148 KB total) ejecuta
+      inferencia completamente offline en aritmética de punto fijo Q16.16. El resultado es
+      bit-idéntico en cualquier dispositivo: teléfono, Raspberry Pi Zero 2 W, servidor regional
+      o equipo ministerial. Esta reproducibilidad garantiza que cualquier decisión asistida
+      pueda auditarse y recalcularse décadas después.
+    </p>
+    <p class="text-base text-slate-700 leading-relaxed">
+      <strong>El modelo BitNet asiste, no reemplaza.</strong> La responsabilidad clínica y legal
+      recae siempre en el profesional sanitario. BitNet es la Capa 4.5 de un canal de 6 capas:
+      una verificación adicional, no el único mecanismo de seguridad.
+    </p>
+  </div>
+
+  <!-- Canal de 6 capas -->
+  <h3 class="font-bold text-center text-slate-800 mb-4">Canal de seguridad de 6 capas</h3>
+  <div class="card p-6 sm:p-8">
+    <div class="space-y-2 max-w-2xl mx-auto">
+
+      <div class="layer-block text-white" style="background:linear-gradient(135deg,#134E4A,#0F766E)">
+        <span class="font-mono text-xs opacity-70 mr-2">Capa 1</span>
+        Tabla determinista local
+        <div class="text-xs font-normal opacity-80 mt-0.5">
+          Verificación de interacciones conocidas contra base RxNorm/SNOMED CT local sin red
+        </div>
+      </div>
+
+      <div class="layer-block text-white" style="background:linear-gradient(135deg,#1e40af,#2563eb)">
+        <span class="font-mono text-xs opacity-70 mr-2">Capa 2</span>
+        Base de conocimiento clínico
+        <div class="text-xs font-normal opacity-80 mt-0.5">
+          Consulta estructurada de la base de medicamentos <code class="text-xs">drug_core.db</code>
+        </div>
+      </div>
+
+      <div class="layer-block text-white" style="background:linear-gradient(135deg,#5b21b6,#7c3aed)">
+        <span class="font-mono text-xs opacity-70 mr-2">Capa 3</span>
+        Terminología normalizada (RxNorm · SNOMED CT · UMLS)
+        <div class="text-xs font-normal opacity-80 mt-0.5">
+          Resolución de sinónimos, marcas y presentaciones locales a identificadores canónicos
+        </div>
+      </div>
+
+      <div class="layer-block text-slate-800 font-semibold"
+           style="background:linear-gradient(135deg,#fef9c3,#fef3c7); border-color:#fde68a;">
+        <span class="font-mono text-xs opacity-60 mr-2">Capa 4</span>
+        Reglas clínicas codificadas
+        <div class="text-xs font-normal opacity-70 mt-0.5">
+          Contraindicaciones absolutas, ajustes por embarazo, edad pediátrica y función renal
+        </div>
+      </div>
+
+      <div class="layer-block text-white"
+           style="background:linear-gradient(135deg,#dc2626,#991b1b); border: 2px solid #fca5a5;">
+        <span class="font-mono text-xs opacity-80 mr-2 font-bold">Capa 4.5</span>
+        <strong>Verificación BitNet</strong>
+        <div class="text-xs font-normal opacity-80 mt-0.5">
+          Clasificador ternario b1.58 · Q16.16 · 148 KB · Offline · Bit-idéntico
+          en Raspberry Pi Zero 2 W, teléfono, servidor regional
+        </div>
+      </div>
+
+      <div class="layer-block text-white" style="background:linear-gradient(135deg,#065f46,#059669)">
+        <span class="font-mono text-xs opacity-70 mr-2">Capa 5</span>
+        Síntesis y presentación al profesional
+        <div class="text-xs font-normal opacity-80 mt-0.5">
+          Veredicto consolidado con explicación legible, nivel de alerta y recomendación de acción
+        </div>
+      </div>
+
+      <div class="layer-block text-slate-700 font-semibold"
+           style="background:linear-gradient(135deg,#f1f5f9,#e2e8f0); border-color:#cbd5e1;">
+        <span class="font-mono text-xs opacity-60 mr-2">Capa 6</span>
+        Compuerta de abstención + auditoría
+        <div class="text-xs font-normal opacity-60 mt-0.5">
+          El sistema anota si el profesional aceptó, modificó o rechazó la recomendación
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-5 p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
+      <strong>Nota institucional:</strong> La Capa 4.5 (BitNet) es una verificación
+      adicional dentro de un canal de seguridad. El sistema nunca emite una orden
+      clínica autónoma. Toda alerta requiere confirmación explícita del profesional
+      sanitario responsable, quedando registrada en la cadena de auditoría.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ §11 GATEWAY MINISTERIAL -->
+<section id="gateway" class="scroll-mt-20">
+  <div class="section-kicker">Sección 11</div>
+  <h2 class="text-2xl sm:text-3xl font-bold text-center mb-2">
+    Gateway de Federación Ministerial
+  </h2>
+  <p class="text-center text-slate-500 mb-8 text-sm">
+    Autoridad certificadora central · Registro y revocación de nodos
+  </p>
+
+  <div class="grid sm:grid-cols-2 gap-5">
+    <div class="card clinical-tile p-6">
+      <h3 class="font-bold text-trust-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-trust-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+        </svg>
+        Registro de nodos
+      </h3>
+      <ul class="space-y-2 text-sm text-slate-700">
+        <li class="flex gap-2.5"><span class="text-trust-500 mt-0.5">·</span>
+          Cada clínica solicita incorporación con documentación institucional</li>
+        <li class="flex gap-2.5"><span class="text-trust-500 mt-0.5">·</span>
+          El Ministerio emite un certificado de nodo firmado con Ed25519</li>
+        <li class="flex gap-2.5"><span class="text-trust-500 mt-0.5">·</span>
+          El certificado define los ámbitos de sincronización autorizados</li>
+        <li class="flex gap-2.5"><span class="text-trust-500 mt-0.5">·</span>
+          El nodo queda inscrito en el registro nacional de nodos clínicos</li>
+      </ul>
+    </div>
+
+    <div class="card p-6 border-blue-200 bg-gradient-to-b from-blue-50 to-white">
+      <h3 class="font-bold text-blue-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        Ámbitos de sincronización
+      </h3>
+      <ul class="space-y-2 text-sm text-slate-700">
+        <li class="flex gap-2.5"><span class="text-blue-500 mt-0.5">·</span>
+          Estadísticas agregadas desanonimizadas para SNIS / DHIS2</li>
+        <li class="flex gap-2.5"><span class="text-blue-500 mt-0.5">·</span>
+          Actualizaciones del paquete de medicamentos firmado</li>
+        <li class="flex gap-2.5"><span class="text-blue-500 mt-0.5">·</span>
+          Alertas de seguridad epidemiológica (brotes, señales de farmacovigilancia)</li>
+        <li class="flex gap-2.5"><span class="text-blue-500 mt-0.5">·</span>
+          Actualizaciones de política clínica y formulario nacional</li>
+      </ul>
+    </div>
+
+    <div class="card p-6 border-red-200 bg-gradient-to-b from-red-50 to-white">
+      <h3 class="font-bold text-red-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+        </svg>
+        Revocación de nodos
+      </h3>
+      <ul class="space-y-2 text-sm text-slate-700">
+        <li class="flex gap-2.5"><span class="text-red-500 mt-0.5">·</span>
+          El Ministerio puede revocar cualquier nodo inmediatamente</li>
+        <li class="flex gap-2.5"><span class="text-red-500 mt-0.5">·</span>
+          La revocación se propaga a todos los nodos de la red</li>
+        <li class="flex gap-2.5"><span class="text-red-500 mt-0.5">·</span>
+          Los nodos revocados no pueden federar nuevos eventos</li>
+        <li class="flex gap-2.5"><span class="text-red-500 mt-0.5">·</span>
+          Los datos históricos del nodo quedan preservados para auditoría</li>
+      </ul>
+    </div>
+
+    <div class="card p-6 border-purple-200 bg-gradient-to-b from-purple-50 to-white">
+      <h3 class="font-bold text-purple-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        Informes de auditoría
+      </h3>
+      <ul class="space-y-2 text-sm text-slate-700">
+        <li class="flex gap-2.5"><span class="text-purple-500 mt-0.5">·</span>
+          Informes consolidados periódicos de actividad de la red</li>
+        <li class="flex gap-2.5"><span class="text-purple-500 mt-0.5">·</span>
+          Alertas de integridad si se detecta manipulación de cadena</li>
+        <li class="flex gap-2.5"><span class="text-purple-500 mt-0.5">·</span>
+          Panel de estado de nodos (activo / inactivo / alerta)</li>
+        <li class="flex gap-2.5"><span class="text-purple-500 mt-0.5">·</span>
+          Trazabilidad completa de acciones de administración</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ §12 DHIS2 -->
+<section id="dhis2" class="scroll-mt-20">
+  <div class="section-kicker">Sección 12</div>
+  <h2 class="text-2xl sm:text-3xl font-bold text-center mb-2">
+    Relación con SNIS y DHIS2
+  </h2>
+  <p class="text-center text-slate-500 mb-8 text-sm">
+    Historia Clínica alimenta · no reemplaza
+  </p>
+
+  <div class="card clinical-tile p-6 sm:p-8 mb-6">
+    <div class="grid md:grid-cols-3 gap-6 items-center">
+      <div class="text-center">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-trust-100 border-2 border-trust-200 flex items-center justify-center mb-2">
+          <svg class="w-7 h-7 text-trust-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+          </svg>
+        </div>
+        <div class="font-bold text-trust-800 text-sm">Nodos clínicos</div>
+        <div class="text-xs text-slate-500 mt-1">Datos clínicos individuales<br>cifrados y firmados</div>
+      </div>
+      <div class="text-center">
+        <div class="flex flex-col items-center gap-1">
+          <div class="text-xs text-slate-400 font-medium">Exportación agregada</div>
+          <svg class="w-8 h-8 text-trust-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+          </svg>
+          <div class="text-xs text-slate-400">Desanonimizada</div>
+          <div class="text-xs text-amber-600 font-medium">PHI eliminada</div>
+        </div>
+      </div>
+      <div class="text-center">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-blue-100 border-2 border-blue-200 flex items-center justify-center mb-2">
+          <svg class="w-7 h-7 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+        </div>
+        <div class="font-bold text-blue-800 text-sm">SNIS / DHIS2</div>
+        <div class="text-xs text-slate-500 mt-1">Indicadores epidemiológicos<br>y estadísticas de salud</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid sm:grid-cols-2 gap-4">
+    <div class="card p-5">
+      <h3 class="font-bold text-slate-800 text-sm mb-3">Lo que Historia Clínica aporta al SNIS</h3>
+      <ul class="space-y-2 text-xs text-slate-600">
+        <li class="flex gap-2"><span class="text-trust-500">✓</span>
+          Mayor cobertura: registra actos clínicos que antes no llegaban al SNIS</li>
+        <li class="flex gap-2"><span class="text-trust-500">✓</span>
+          Mayor completitud: datos estructurados con diagnósticos CIE-10 y medicamentos RxNorm</li>
+        <li class="flex gap-2"><span class="text-trust-500">✓</span>
+          Mayor oportunidad: exportaciones más frecuentes que el reporte mensual manual</li>
+        <li class="flex gap-2"><span class="text-trust-500">✓</span>
+          Señales de farmacovigilancia: patrones de reacciones adversas a nivel nacional</li>
+      </ul>
+    </div>
+    <div class="card p-5">
+      <h3 class="font-bold text-slate-800 text-sm mb-3">Lo que NO cambia del SNIS</h3>
+      <ul class="space-y-2 text-xs text-slate-600">
+        <li class="flex gap-2"><span class="text-slate-400">·</span>
+          Los flujos actuales de reporte de los establecimientos al nivel distrital</li>
+        <li class="flex gap-2"><span class="text-slate-400">·</span>
+          La plataforma DHIS2 como herramienta de análisis epidemiológico nacional</li>
+        <li class="flex gap-2"><span class="text-slate-400">·</span>
+          La estructura organizativa del SNIS y sus responsables</li>
+        <li class="flex gap-2"><span class="text-slate-400">·</span>
+          Los indicadores de salud ya definidos y sus metodologías de cálculo</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ §13 DESPLIEGUE -->
+<section id="despliegue" class="scroll-mt-20">
+  <div class="section-kicker">Sección 13</div>
+  <h2 class="text-2xl sm:text-3xl font-bold text-center mb-2">Plan de Despliegue</h2>
+  <p class="text-center text-slate-500 mb-10 text-sm">
+    Cinco fases · Gobierno → Fundación → Piloto → Regional → Nacional
+  </p>
+
+  <div class="card p-6 sm:p-10">
+    <div class="relative">
+      <!-- Timeline line (desktop: centered, mobile: left) -->
+      <div class="absolute left-6 md:left-1/2 top-0 bottom-0 w-0.5
+                  bg-gradient-to-b from-trust-600 via-blue-500 to-purple-500"
+           aria-hidden="true" style="transform: translateX(-50%)"></div>
+
+      <div class="space-y-10">
+        <!-- Fase 0 -->
+        <div class="relative flex flex-col md:flex-row md:items-start gap-4 md:gap-0">
+          <div class="md:w-1/2 md:pr-10 md:text-right pl-14 md:pl-0">
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold
+                        bg-trust-100 text-trust-800 border border-trust-200 mb-2">
+              Fase 0 · 1–2 meses
+            </div>
+            <h3 class="font-bold text-slate-900 text-base mb-1">Alineación gubernamental</h3>
+            <p class="text-sm text-slate-600">Acuerdo formal con el Ministerio de Sanidad y
+               Bienestar Social. Designación del equipo técnico nacional. Definición
+               de políticas de privacidad y gobernanza de datos.</p>
+          </div>
+          <!-- Dot -->
+          <div class="absolute left-4 md:left-1/2 top-1 w-5 h-5 rounded-full
+                      bg-trust-600 border-2 border-white shadow-trust flex-shrink-0"
+               style="transform: translateX(-50%)"></div>
+          <div class="md:w-1/2 md:pl-10 hidden md:block"></div>
+        </div>
+
+        <!-- Fase 1 -->
+        <div class="relative flex flex-col md:flex-row md:items-start gap-4 md:gap-0">
+          <div class="md:w-1/2 hidden md:block"></div>
+          <div class="absolute left-4 md:left-1/2 top-1 w-5 h-5 rounded-full
+                      bg-blue-600 border-2 border-white shadow-premium flex-shrink-0"
+               style="transform: translateX(-50%)"></div>
+          <div class="md:w-1/2 md:pl-10 pl-14">
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold
+                        bg-blue-100 text-blue-800 border border-blue-200 mb-2">
+              Fase 1 · 2–3 meses
+            </div>
+            <h3 class="font-bold text-slate-900 text-base mb-1">Fundación técnica</h3>
+            <p class="text-sm text-slate-600">Despliegue del Gateway Ministerial. Configuración
+               del sistema de certificados. Formación del equipo técnico nacional.
+               Preparación de la base de datos de medicamentos con el formulario nacional.</p>
+          </div>
+        </div>
+
+        <!-- Fase 2 -->
+        <div class="relative flex flex-col md:flex-row md:items-start gap-4 md:gap-0">
+          <div class="md:w-1/2 md:pr-10 md:text-right pl-14 md:pl-0">
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold
+                        bg-amber-100 text-amber-800 border border-amber-200 mb-2">
+              Fase 2 · 3–6 meses · 5–10 clínicas
+            </div>
+            <h3 class="font-bold text-slate-900 text-base mb-1">Piloto controlado</h3>
+            <p class="text-sm text-slate-600">Instalación en 5–10 establecimientos seleccionados
+               de Malabo y Bata. Formación de profesionales. Evaluación de usabilidad,
+               rendimiento y seguridad. Ajuste de protocolos.</p>
+          </div>
+          <div class="absolute left-4 md:left-1/2 top-1 w-5 h-5 rounded-full
+                      bg-amber-500 border-2 border-white flex-shrink-0"
+               style="transform: translateX(-50%)"></div>
+          <div class="md:w-1/2 md:pl-10 hidden md:block"></div>
+        </div>
+
+        <!-- Fase 3 -->
+        <div class="relative flex flex-col md:flex-row md:items-start gap-4 md:gap-0">
+          <div class="md:w-1/2 hidden md:block"></div>
+          <div class="absolute left-4 md:left-1/2 top-1 w-5 h-5 rounded-full
+                      bg-purple-600 border-2 border-white flex-shrink-0"
+               style="transform: translateX(-50%)"></div>
+          <div class="md:w-1/2 md:pl-10 pl-14">
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold
+                        bg-purple-100 text-purple-800 border border-purple-200 mb-2">
+              Fase 3 · 6–12 meses · 50–100 clínicas
+            </div>
+            <h3 class="font-bold text-slate-900 text-base mb-1">Expansión regional</h3>
+            <p class="text-sm text-slate-600">Despliegue en todas las regiones continentales e
+               insulares. Activación de nodos regionales. Integración con el SNIS.
+               Formación de formadores locales por provincia.</p>
+          </div>
+        </div>
+
+        <!-- Fase 4 -->
+        <div class="relative flex flex-col md:flex-row md:items-start gap-4 md:gap-0">
+          <div class="md:w-1/2 md:pr-10 md:text-right pl-14 md:pl-0">
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold
+                        bg-green-100 text-clinical-green border border-green-200 mb-2">
+              Fase 4 · 12–24 meses · Cobertura nacional
+            </div>
+            <h3 class="font-bold text-slate-900 text-base mb-1">Despliegue nacional</h3>
+            <p class="text-sm text-slate-600">Todos los establecimientos sanitarios públicos
+               incorporados a la red. Integración completa con DHIS2. Soporte a
+               la farmacovigilancia nacional. Mantenimiento autónomo por el equipo técnico.</p>
+          </div>
+          <div class="absolute left-4 md:left-1/2 top-1 w-5 h-5 rounded-full
+                      bg-clinical-green border-2 border-white flex-shrink-0"
+               style="transform: translateX(-50%)"></div>
+          <div class="md:w-1/2 md:pl-10 hidden md:block"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ §14 SEGURIDAD -->
+<section id="seguridad" class="scroll-mt-20">
+  <div class="section-kicker">Sección 14</div>
+  <h2 class="text-2xl sm:text-3xl font-bold text-center mb-2">
+    Modelo de Seguridad y Responsabilidad
+  </h2>
+  <p class="text-center text-slate-500 mb-8 text-sm">
+    Teléfono = interfaz · Nodo de clínica = autoritativo · Ministerio = autoridad certificadora
+  </p>
+
+  <!-- Responsabilidades por capa -->
+  <div class="grid sm:grid-cols-3 gap-4 mb-6">
+    <div class="card p-5 border-slate-300">
+      <div class="font-mono text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
+        Teléfono / Tableta
+      </div>
+      <h3 class="font-bold text-slate-800 mb-2">Interfaz de acceso</h3>
+      <ul class="text-xs text-slate-600 space-y-1.5">
+        <li>· Autentica al profesional con el nodo local</li>
+        <li>· Muestra datos, no los almacena</li>
+        <li>· Envía instrucciones al nodo para su firma</li>
+        <li>· Si se pierde: datos seguros en el nodo</li>
+      </ul>
+    </div>
+    <div class="card clinical-tile p-5 border-trust-300">
+      <div class="font-mono text-xs font-bold text-trust-600 uppercase tracking-widest mb-2">
+        Nodo de Clínica
+      </div>
+      <h3 class="font-bold text-trust-800 mb-2">Repositorio autoritativo</h3>
+      <ul class="text-xs text-slate-600 space-y-1.5">
+        <li>· Firma cada evento con su clave Ed25519</li>
+        <li>· Mantiene la cadena de auditoría SHA-256</li>
+        <li>· Verifica y ejecuta el canal de seguridad</li>
+        <li>· Único repositorio de verdad por clínica</li>
+      </ul>
+    </div>
+    <div class="card p-5 border-purple-200 bg-purple-50">
+      <div class="font-mono text-xs font-bold text-purple-600 uppercase tracking-widest mb-2">
+        Ministerio
+      </div>
+      <h3 class="font-bold text-purple-800 mb-2">Autoridad certificadora</h3>
+      <ul class="text-xs text-slate-600 space-y-1.5">
+        <li>· Emite y revoca certificados de nodo</li>
+        <li>· Recibe auditorías consolidadas</li>
+        <li>· Distribuye paquetes de medicamentos</li>
+        <li>· Define políticas de federación</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Trazabilidad de cada acción -->
+  <div class="card p-6 sm:p-8">
+    <h3 class="font-bold text-slate-800 mb-4">Trazabilidad completa de cada acción clínica</h3>
+    <p class="text-sm text-slate-600 mb-5">
+      Cada acción registrada en el sistema incluye de forma inmutable los siguientes campos:
+    </p>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="p-3 rounded-lg bg-trust-50 border border-trust-100 text-xs">
+        <div class="font-bold text-trust-700 mb-0.5">Quién</div>
+        <div class="text-slate-600">Identificador firmado del profesional sanitario</div>
+      </div>
+      <div class="p-3 rounded-lg bg-blue-50 border border-blue-100 text-xs">
+        <div class="font-bold text-blue-700 mb-0.5">Dónde</div>
+        <div class="text-slate-600">Identificador del nodo de clínica certificado</div>
+      </div>
+      <div class="p-3 rounded-lg bg-amber-50 border border-amber-100 text-xs">
+        <div class="font-bold text-amber-700 mb-0.5">Dispositivo</div>
+        <div class="text-slate-600">Identificador del dispositivo de interfaz utilizado</div>
+      </div>
+      <div class="p-3 rounded-lg bg-green-50 border border-green-100 text-xs">
+        <div class="font-bold text-green-700 mb-0.5">Paciente</div>
+        <div class="text-slate-600">Identificador seudoanonimizado del paciente</div>
+      </div>
+      <div class="p-3 rounded-lg bg-purple-50 border border-purple-100 text-xs">
+        <div class="font-bold text-purple-700 mb-0.5">Cuándo</div>
+        <div class="text-slate-600">Marca temporal con precisión de milisegundo</div>
+      </div>
+      <div class="p-3 rounded-lg bg-rose-50 border border-rose-100 text-xs">
+        <div class="font-bold text-rose-700 mb-0.5">Entrada</div>
+        <div class="text-slate-600">Datos clínicos aportados antes de la acción</div>
+      </div>
+      <div class="p-3 rounded-lg bg-trust-50 border border-trust-100 text-xs">
+        <div class="font-bold text-trust-700 mb-0.5">Salida</div>
+        <div class="text-slate-600">Recomendación del sistema y respuesta del profesional</div>
+      </div>
+      <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs">
+        <div class="font-bold text-slate-700 mb-0.5">Versiones</div>
+        <div class="text-slate-600">Versión de BD de medicamentos y versión de modelo</div>
+      </div>
+    </div>
+    <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+      <strong>Anulación con motivo:</strong> Si un profesional corrige o anula un registro,
+      el sistema exige indicar el motivo de la corrección. La anulación no borra el
+      registro original; añade un nuevo evento de corrección vinculado al original.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ §15 ROLES -->
+<section id="roles" class="scroll-mt-20">
+  <div class="section-kicker">Sección 15</div>
+  <h2 class="text-2xl sm:text-3xl font-bold text-center mb-2">Roles de Usuario</h2>
+  <p class="text-center text-slate-500 mb-8 text-sm">
+    Nueve perfiles con acceso diferenciado y auditable
+  </p>
+
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <!-- Médico -->
+    <div class="card p-5 clinical-tile border-trust-200">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-9 h-9 rounded-full bg-trust-100 border border-trust-200 flex items-center justify-center flex-shrink-0 text-lg">🩺</div>
+        <div><div class="font-bold text-slate-900 text-sm">Médico</div>
+          <div class="text-xs text-slate-500">Clínico principal</div></div>
+      </div>
+      <ul class="text-xs text-slate-600 space-y-1">
+        <li>· Historia clínica completa del paciente</li>
+        <li>· Prescripción y verificación de medicamentos</li>
+        <li>· Acceso a alertas de seguridad farmacológica</li>
+        <li>· Registro de diagnósticos y notas de evolución</li>
+      </ul>
+    </div>
+    <!-- Enfermero -->
+    <div class="card p-5 border-blue-200 bg-gradient-to-b from-blue-50 to-white">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-9 h-9 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center flex-shrink-0 text-lg">👩‍⚕️</div>
+        <div><div class="font-bold text-slate-900 text-sm">Enfermero/a</div>
+          <div class="text-xs text-slate-500">Atención directa</div></div>
+      </div>
+      <ul class="text-xs text-slate-600 space-y-1">
+        <li>· Constantes vitales y registro de administración</li>
+        <li>· Consulta del historial de alergias</li>
+        <li>· Alertas de seguridad activas del paciente</li>
+        <li>· Anotaciones de enfermería</li>
+      </ul>
+    </div>
+    <!-- Farmacéutico -->
+    <div class="card p-5 border-green-200 bg-gradient-to-b from-green-50 to-white">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-9 h-9 rounded-full bg-green-100 border border-green-200 flex items-center justify-center flex-shrink-0 text-lg">💊</div>
+        <div><div class="font-bold text-slate-900 text-sm">Farmacéutico/a</div>
+          <div class="text-xs text-slate-500">Dispensación</div></div>
+      </div>
+      <ul class="text-xs text-slate-600 space-y-1">
+        <li>· Verificación de prescripciones activas</li>
+        <li>· Detección de interacciones en dispensación</li>
+        <li>· Registro de entrega y confirmación</li>
+        <li>· Consulta de disponibilidad en formulario</li>
+      </ul>
+    </div>
+    <!-- Laboratorio -->
+    <div class="card p-5 border-amber-200 bg-gradient-to-b from-amber-50 to-white">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-9 h-9 rounded-full bg-amber-100 border border-amber-200 flex items-center justify-center flex-shrink-0 text-lg">🧪</div>
+        <div><div class="font-bold text-slate-900 text-sm">Técnico de Laboratorio</div>
+          <div class="text-xs text-slate-500">Diagnóstico</div></div>
+      </div>
+      <ul class="text-xs text-slate-600 space-y-1">
+        <li>· Registro de resultados analíticos</li>
+        <li>· Consulta de solicitudes pendientes</li>
+        <li>· Vinculación de resultados al episodio</li>
+        <li>· Alertas de valores críticos</li>
+      </ul>
+    </div>
+    <!-- Admin clínica -->
+    <div class="card p-5 border-purple-200 bg-gradient-to-b from-purple-50 to-white">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-9 h-9 rounded-full bg-purple-100 border border-purple-200 flex items-center justify-center flex-shrink-0 text-lg">🏥</div>
+        <div><div class="font-bold text-slate-900 text-sm">Administrador de Clínica</div>
+          <div class="text-xs text-slate-500">Gestión local</div></div>
+      </div>
+      <ul class="text-xs text-slate-600 space-y-1">
+        <li>· Alta y baja de usuarios locales</li>
+        <li>· Configuración del nodo</li>
+        <li>· Gestión de copias de seguridad</li>
+        <li>· Informes de actividad del establecimiento</li>
+      </ul>
+    </div>
+    <!-- Revisor regional -->
+    <div class="card p-5 border-slate-300 bg-gradient-to-b from-slate-50 to-white">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-9 h-9 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center flex-shrink-0 text-lg">📊</div>
+        <div><div class="font-bold text-slate-900 text-sm">Revisor Regional</div>
+          <div class="text-xs text-slate-500">Coordinación provincial</div></div>
+      </div>
+      <ul class="text-xs text-slate-600 space-y-1">
+        <li>· Estadísticas agregadas de la región</li>
+        <li>· Estado de nodos bajo su coordinación</li>
+        <li>· Alertas de anomalías epidemiológicas</li>
+        <li>· Sin acceso a datos individuales</li>
+      </ul>
+    </div>
+    <!-- Auditor ministerial -->
+    <div class="card p-5 border-red-200 bg-gradient-to-b from-red-50 to-white">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-9 h-9 rounded-full bg-red-100 border border-red-200 flex items-center justify-center flex-shrink-0 text-lg">🔍</div>
+        <div><div class="font-bold text-slate-900 text-sm">Auditor Ministerial</div>
+          <div class="text-xs text-slate-500">Supervisión nacional</div></div>
+      </div>
+      <ul class="text-xs text-slate-600 space-y-1">
+        <li>· Acceso de lectura a cadenas de auditoría</li>
+        <li>· Verificación de integridad de cadenas SHA-256</li>
+        <li>· Informes consolidados de toda la red</li>
+        <li>· Detección de anomalías en registros</li>
+      </ul>
+    </div>
+    <!-- Mantenedor técnico -->
+    <div class="card p-5 border-trust-200 bg-gradient-to-b from-trust-50 to-white">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-9 h-9 rounded-full bg-trust-100 border border-trust-200 flex items-center justify-center flex-shrink-0 text-lg">🔧</div>
+        <div><div class="font-bold text-slate-900 text-sm">Mantenedor Técnico</div>
+          <div class="text-xs text-slate-500">Soporte de hardware</div></div>
+      </div>
+      <ul class="text-xs text-slate-600 space-y-1">
+        <li>· Instalación y actualización de software</li>
+        <li>· Gestión de hardware de nodos</li>
+        <li>· Sin acceso a datos clínicos</li>
+        <li>· Registro de intervenciones técnicas</li>
+      </ul>
+    </div>
+    <!-- Admin federación -->
+    <div class="card p-5 border-blue-300 bg-gradient-to-b from-blue-50 to-white">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-9 h-9 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center flex-shrink-0 text-lg">🌐</div>
+        <div><div class="font-bold text-slate-900 text-sm">Admin de Federación</div>
+          <div class="text-xs text-slate-500">Gateway Ministerial</div></div>
+      </div>
+      <ul class="text-xs text-slate-600 space-y-1">
+        <li>· Registro y revocación de nodos</li>
+        <li>· Gestión de certificados Ed25519</li>
+        <li>· Distribución de paquetes firmados</li>
+        <li>· Configuración de ámbitos de sync</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ §16 FORMACIÓN -->
+<section id="formacion" class="scroll-mt-20">
+  <div class="section-kicker">Sección 16</div>
+  <h2 class="text-2xl sm:text-3xl font-bold text-center mb-2">Plan de Formación</h2>
+  <p class="text-center text-slate-500 mb-8 text-sm">
+    Tres días de capacitación estructurada
+  </p>
+
+  <div class="grid md:grid-cols-3 gap-5 mb-8">
+    <div class="card clinical-tile p-6">
+      <div class="w-10 h-10 rounded-xl bg-trust-600 text-white font-bold text-lg flex items-center justify-center mb-4">1</div>
+      <h3 class="font-bold text-trust-800 mb-3">Día 1 — Uso básico</h3>
+      <ul class="space-y-2 text-sm text-slate-700">
+        <li class="flex gap-2.5"><span class="text-trust-500 mt-0.5">·</span>
+          Acceso al sistema y autenticación segura</li>
+        <li class="flex gap-2.5"><span class="text-trust-500 mt-0.5">·</span>
+          Registro y búsqueda de pacientes</li>
+        <li class="flex gap-2.5"><span class="text-trust-500 mt-0.5">·</span>
+          Creación de consultas y encuentros</li>
+        <li class="flex gap-2.5"><span class="text-trust-500 mt-0.5">·</span>
+          Prescripción básica de medicamentos</li>
+        <li class="flex gap-2.5"><span class="text-trust-500 mt-0.5">·</span>
+          Navegación por la historia clínica</li>
+      </ul>
+    </div>
+    <div class="card p-6 border-amber-200 bg-gradient-to-b from-amber-50 to-white">
+      <div class="w-10 h-10 rounded-xl bg-amber-500 text-white font-bold text-lg flex items-center justify-center mb-4">2</div>
+      <h3 class="font-bold text-amber-800 mb-3">Día 2 — Flujo de seguridad clínica</h3>
+      <ul class="space-y-2 text-sm text-slate-700">
+        <li class="flex gap-2.5"><span class="text-amber-500 mt-0.5">·</span>
+          Interpretación de alertas de seguridad</li>
+        <li class="flex gap-2.5"><span class="text-amber-500 mt-0.5">·</span>
+          Colores de aviso y protocolo de respuesta</li>
+        <li class="flex gap-2.5"><span class="text-amber-500 mt-0.5">·</span>
+          Registro de alergias y reacciones adversas</li>
+        <li class="flex gap-2.5"><span class="text-amber-500 mt-0.5">·</span>
+          Resolución de conflictos de prescripción</li>
+        <li class="flex gap-2.5"><span class="text-amber-500 mt-0.5">·</span>
+          Corrección y anulación de registros</li>
+      </ul>
+    </div>
+    <div class="card p-6 border-purple-200 bg-gradient-to-b from-purple-50 to-white">
+      <div class="w-10 h-10 rounded-xl bg-purple-600 text-white font-bold text-lg flex items-center justify-center mb-4">3</div>
+      <h3 class="font-bold text-purple-800 mb-3">Día 3 — Administración</h3>
+      <ul class="space-y-2 text-sm text-slate-700">
+        <li class="flex gap-2.5"><span class="text-purple-500 mt-0.5">·</span>
+          Gestión de usuarios y contraseñas</li>
+        <li class="flex gap-2.5"><span class="text-purple-500 mt-0.5">·</span>
+          Copias de seguridad y restauración</li>
+        <li class="flex gap-2.5"><span class="text-purple-500 mt-0.5">·</span>
+          Actualización de la base de medicamentos</li>
+        <li class="flex gap-2.5"><span class="text-purple-500 mt-0.5">·</span>
+          Diagnóstico básico de incidencias</li>
+        <li class="flex gap-2.5"><span class="text-purple-500 mt-0.5">·</span>
+          Procedimiento de contacto con soporte nacional</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Leyenda de colores de alerta -->
+  <div class="card p-6">
+    <h3 class="font-bold text-slate-800 mb-4 text-base">Leyenda de colores de aviso</h3>
+    <p class="text-sm text-slate-600 mb-4">
+      Todos los profesionales aprenden a reconocer e interpretar el código de colores
+      del sistema antes de utilizarlo en atención clínica:
+    </p>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="flex items-start gap-3 p-3 rounded-xl bg-red-50 border border-red-200">
+        <span class="swatch mt-0.5" style="background:#dc2626; min-width:1rem; min-height:1rem;"></span>
+        <div>
+          <div class="font-bold text-red-800 text-sm">Rojo</div>
+          <div class="text-xs text-red-700 mt-0.5">Alerta crítica. Contraindicación absoluta o
+             interacción con riesgo vital. Acción inmediata requerida.</div>
+        </div>
+      </div>
+      <div class="flex items-start gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
+        <span class="swatch mt-0.5" style="background:#d97706; min-width:1rem; min-height:1rem;"></span>
+        <div>
+          <div class="font-bold text-amber-800 text-sm">Amarillo</div>
+          <div class="text-xs text-amber-700 mt-0.5">Precaución. Interacción moderada o
+             contraindicación relativa. Requiere valoración clínica.</div>
+        </div>
+      </div>
+      <div class="flex items-start gap-3 p-3 rounded-xl bg-green-50 border border-green-200">
+        <span class="swatch mt-0.5" style="background:#16a34a; min-width:1rem; min-height:1rem;"></span>
+        <div>
+          <div class="font-bold text-green-800 text-sm">Verde</div>
+          <div class="text-xs text-green-700 mt-0.5">Sin alerta activa. Prescripción
+             verificada sin interacciones detectadas en las capas 1–4.5.</div>
+        </div>
+      </div>
+      <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+        <span class="swatch mt-0.5" style="background:#94a3b8; min-width:1rem; min-height:1rem;"></span>
+        <div>
+          <div class="font-bold text-slate-700 text-sm">Gris</div>
+          <div class="text-xs text-slate-600 mt-0.5">Información insuficiente. El sistema
+             no pudo verificar completamente. El profesional debe revisar manualmente.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ §17 VALOR -->
+<section id="valor" class="scroll-mt-20">
+  <div class="section-kicker">Sección 17</div>
+  <h2 class="text-2xl sm:text-3xl font-bold text-center mb-2">Propuesta de Valor Nacional</h2>
+  <p class="text-center text-slate-500 mb-8 text-sm">
+    Beneficios diferenciados por parte interesada
+  </p>
+
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+    <!-- Ministerio -->
+    <div class="card p-6 border-trust-200 clinical-tile">
+      <div class="w-10 h-10 rounded-xl bg-trust-100 border border-trust-200 flex items-center justify-center mb-3">
+        <svg class="w-5 h-5 text-trust-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+        </svg>
+      </div>
+      <h3 class="font-bold text-trust-800 mb-3">Ministerio de Sanidad</h3>
+      <ul class="space-y-2 text-sm text-slate-700">
+        <li class="flex gap-2"><span class="text-trust-500">·</span>
+          Visibilidad real del acto clínico en cada establecimiento</li>
+        <li class="flex gap-2"><span class="text-trust-500">·</span>
+          Datos más completos para la planificación sanitaria nacional</li>
+        <li class="flex gap-2"><span class="text-trust-500">·</span>
+          Señales tempranas de epidemias y resistencia antimicrobiana</li>
+        <li class="flex gap-2"><span class="text-trust-500">·</span>
+          Soberanía total sobre los datos de salud del país</li>
+        <li class="flex gap-2"><span class="text-trust-500">·</span>
+          Capacidad de auditoría clínica sin acceso a datos personales</li>
+      </ul>
+    </div>
+
+    <!-- Médicos -->
+    <div class="card p-6 border-blue-200 bg-gradient-to-b from-blue-50 to-white">
+      <div class="w-10 h-10 rounded-xl bg-blue-100 border border-blue-200 flex items-center justify-center mb-3">
+        <svg class="w-5 h-5 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+        </svg>
+      </div>
+      <h3 class="font-bold text-blue-800 mb-3">Profesionales Sanitarios</h3>
+      <ul class="space-y-2 text-sm text-slate-700">
+        <li class="flex gap-2"><span class="text-blue-500">·</span>
+          Historia clínica completa disponible sin conexión a internet</li>
+        <li class="flex gap-2"><span class="text-blue-500">·</span>
+          Alertas automáticas de seguridad farmacológica</li>
+        <li class="flex gap-2"><span class="text-blue-500">·</span>
+          Reducción del riesgo de prescripción por interacciones</li>
+        <li class="flex gap-2"><span class="text-blue-500">·</span>
+          Herramienta que protege la responsabilidad del profesional</li>
+        <li class="flex gap-2"><span class="text-blue-500">·</span>
+          Formulario nacional integrado para prescripción adecuada</li>
+      </ul>
+    </div>
+
+    <!-- Pacientes -->
+    <div class="card p-6 border-green-200 bg-gradient-to-b from-green-50 to-white">
+      <div class="w-10 h-10 rounded-xl bg-green-100 border border-green-200 flex items-center justify-center mb-3">
+        <svg class="w-5 h-5 text-clinical-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </div>
+      <h3 class="font-bold text-green-800 mb-3">Pacientes</h3>
+      <ul class="space-y-2 text-sm text-slate-700">
+        <li class="flex gap-2"><span class="text-clinical-green">·</span>
+          Mayor seguridad en la prescripción y dispensación</li>
+        <li class="flex gap-2"><span class="text-clinical-green">·</span>
+          Historia clínica coherente entre visitas y establecimientos</li>
+        <li class="flex gap-2"><span class="text-clinical-green">·</span>
+          Datos protegidos en el nodo local, no en nubes externas</li>
+        <li class="flex gap-2"><span class="text-clinical-green">·</span>
+          Atención más informada también en zonas rurales sin internet</li>
+      </ul>
+    </div>
+
+    <!-- Reguladores -->
+    <div class="card p-6 border-amber-200 bg-gradient-to-b from-amber-50 to-white">
+      <div class="w-10 h-10 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center mb-3">
+        <svg class="w-5 h-5 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+        </svg>
+      </div>
+      <h3 class="font-bold text-amber-800 mb-3">Reguladores</h3>
+      <ul class="space-y-2 text-sm text-slate-700">
+        <li class="flex gap-2"><span class="text-amber-500">·</span>
+          Auditoría criptográfica verificable sin alterar datos</li>
+        <li class="flex gap-2"><span class="text-amber-500">·</span>
+          Cadena de custodia inmutable para investigaciones</li>
+        <li class="flex gap-2"><span class="text-amber-500">·</span>
+          Señales de farmacovigilancia a nivel nacional</li>
+        <li class="flex gap-2"><span class="text-amber-500">·</span>
+          Cumplimiento de protección de datos personal verificable</li>
+      </ul>
+    </div>
+
+    <!-- Socios -->
+    <div class="card p-6 border-purple-200 bg-gradient-to-b from-purple-50 to-white sm:col-span-2 lg:col-span-1">
+      <div class="w-10 h-10 rounded-xl bg-purple-100 border border-purple-200 flex items-center justify-center mb-3">
+        <svg class="w-5 h-5 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+        </svg>
+      </div>
+      <h3 class="font-bold text-purple-800 mb-3">Socios Internacionales</h3>
+      <ul class="space-y-2 text-sm text-slate-700">
+        <li class="flex gap-2"><span class="text-purple-500">·</span>
+          Interoperabilidad con estándares FHIR R4 y DHIS2</li>
+        <li class="flex gap-2"><span class="text-purple-500">·</span>
+          Datos epidemiológicos de calidad para cooperación sanitaria</li>
+        <li class="flex gap-2"><span class="text-purple-500">·</span>
+          Infraestructura soberana que no depende de donantes externos</li>
+        <li class="flex gap-2"><span class="text-purple-500">·</span>
+          Modelo replicable para toda la subregión de África Central</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ §18 ARQUITECTURA FINAL -->
+<section id="stack" class="scroll-mt-20">
+  <div class="section-kicker">Sección 18</div>
+  <h2 class="text-2xl sm:text-3xl font-bold text-center mb-2">Arquitectura Final</h2>
+  <p class="text-center text-slate-500 mb-8 text-sm">
+    Stack nacional de 6 capas · Desde el paciente hasta el Ministerio
+  </p>
+
+  <div class="card p-6 sm:p-10">
+    <div class="space-y-3 max-w-2xl mx-auto">
+
+      <!-- Capa 1 -->
+      <div class="rounded-xl p-4 text-center text-white font-semibold"
+           style="background: linear-gradient(135deg,#042F2E,#0F766E);">
+        <div class="text-xs font-bold uppercase tracking-widest opacity-60 mb-1">Capa 1 — Gobernanza</div>
+        <div class="text-base">Ministerio de Sanidad y Bienestar Social</div>
+        <div class="text-xs font-normal opacity-75 mt-1">
+          Autoridad certificadora · Política sanitaria · Auditoría nacional · Gateway de Federación
+        </div>
+      </div>
+      <div class="text-center text-xs text-slate-400">↕ Canal cifrado TLS + Ed25519</div>
+
+      <!-- Capa 2 -->
+      <div class="rounded-xl p-4 text-center text-white font-semibold"
+           style="background: linear-gradient(135deg,#075985,#0369A1);">
+        <div class="text-xs font-bold uppercase tracking-widest opacity-60 mb-1">Capa 2 — Coordinación Regional</div>
+        <div class="text-base">Nodos Regionales (Clase C)</div>
+        <div class="text-xs font-normal opacity-75 mt-1">
+          Hospitales provinciales · Agregación estadística · Relay de actualizaciones · SNIS / DHIS2
+        </div>
+      </div>
+      <div class="text-center text-xs text-slate-400">↕ Sincronización por red privada o soporte físico</div>
+
+      <!-- Capa 3 -->
+      <div class="rounded-xl p-4 text-center text-white font-semibold"
+           style="background: linear-gradient(135deg,#5b21b6,#7c3aed);">
+        <div class="text-xs font-bold uppercase tracking-widest opacity-60 mb-1">Capa 3 — Registro Clínico Local</div>
+        <div class="text-base">Nodos de Clínica (Clase A / B)</div>
+        <div class="text-xs font-normal opacity-75 mt-1">
+          Raspberry Pi · Base de datos local · Firma Ed25519 · Canal de seguridad 6 capas
+        </div>
+      </div>
+      <div class="text-center text-xs text-slate-400">↕ Wi-Fi local de la clínica</div>
+
+      <!-- Capa 4 -->
+      <div class="rounded-xl p-4 text-center text-slate-800 font-semibold"
+           style="background: linear-gradient(135deg,#fef3c7,#fde68a);">
+        <div class="text-xs font-bold uppercase tracking-widest opacity-50 mb-1">Capa 4 — Interfaz</div>
+        <div class="text-base">Teléfonos y Tabletas del Personal</div>
+        <div class="text-xs font-normal opacity-70 mt-1">
+          Solo visualización y entrada de datos · Nunca repositorio · Autenticación en nodo local
+        </div>
+      </div>
+      <div class="text-center text-xs text-slate-400">↕ Interacción presencial</div>
+
+      <!-- Capa 5 -->
+      <div class="rounded-xl p-4 text-center font-semibold"
+           style="background: linear-gradient(135deg,#f0fdf4,#dcfce7); border: 1px solid #86efac; color: #166534">
+        <div class="text-xs font-bold uppercase tracking-widest opacity-50 mb-1">Capa 5 — Conocimiento Offline</div>
+        <div class="text-base">Base de Medicamentos + BitNet</div>
+        <div class="text-xs font-normal opacity-70 mt-1">
+          RxNorm · SNOMED CT · UMLS · drug_core.db · Clasificador ternario Q16.16 · 148 KB
+        </div>
+      </div>
+      <div class="text-center text-xs text-slate-400">↕ Paquete firmado actualizable</div>
+
+      <!-- Capa 6 -->
+      <div class="rounded-xl p-4 text-center text-white font-semibold"
+           style="background: linear-gradient(135deg,#1e293b,#334155);">
+        <div class="text-xs font-bold uppercase tracking-widest opacity-60 mb-1">Capa 6 — Estándares</div>
+        <div class="text-base">Interoperabilidad Internacional</div>
+        <div class="text-xs font-normal opacity-75 mt-1">
+          FHIR R4 · SHA-256 Merkle · Ed25519 · Exportación DHIS2 · Eventos append-only
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-8 grid sm:grid-cols-3 gap-3 text-xs text-center">
+      <div class="p-3 rounded-lg bg-trust-50 border border-trust-100">
+        <div class="font-bold text-trust-700 mb-1">Operación offline total</div>
+        <div class="text-slate-600">Las capas 3–5 funcionan sin conectividad externa</div>
+      </div>
+      <div class="p-3 rounded-lg bg-blue-50 border border-blue-100">
+        <div class="font-bold text-blue-700 mb-1">Federación controlada</div>
+        <div class="text-slate-600">Las capas 1–3 sincronizan solo bajo supervisión ministerial</div>
+      </div>
+      <div class="p-3 rounded-lg bg-purple-50 border border-purple-100">
+        <div class="font-bold text-purple-700 mb-1">Auditoría universal</div>
+        <div class="text-slate-600">La capa 6 garantiza que cualquier nodo puede verificar cualquier decisión</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ §19 CONCLUSIÓN -->
+<section id="conclusion" class="scroll-mt-20">
+  <div class="section-kicker">Sección 19</div>
+  <h2 class="text-2xl sm:text-3xl font-bold text-center mb-8">Conclusión</h2>
+
+  <div class="card clinical-tile p-8 sm:p-12 mb-6 text-center">
+    <div class="max-w-3xl mx-auto">
+      <p class="text-lg sm:text-xl leading-relaxed text-slate-700 mb-6 font-light">
+        Guinea Ecuatorial tiene la oportunidad de construir una infraestructura nacional
+        de salud digital <strong class="text-trust-700 font-semibold">soberana, auditable y
+        resiliente</strong> — que funcione en la selva continental, en las islas y
+        en cualquier clínica rural sin depender jamás de internet.
+      </p>
+      <p class="text-base leading-relaxed text-slate-600 mb-6">
+        Historia Clínica no es una plataforma importada que requiere servidores externos,
+        contratos de mantenimiento perpetuo con terceros o conexión constante a la red.
+        Es una red de nodos locales, gobernada por el Ministerio de Sanidad y
+        Bienestar Social, que pone la historia del paciente en manos del profesional
+        que lo atiende — firmada, trazada e inmutable.
+      </p>
+      <p class="text-base leading-relaxed text-slate-600">
+        La infraestructura técnica está lista. El modelo de gobernanza está diseñado.
+        El plan de despliegue es gradual y ajustable a la realidad del país.
+        El siguiente paso es la decisión institucional de construir juntos
+        la memoria clínica nacional de Guinea Ecuatorial.
+      </p>
+    </div>
+  </div>
+
+  <!-- Call to action institucional -->
+  <div class="grid sm:grid-cols-3 gap-4">
+    <div class="card p-5 text-center border-trust-200 clinical-tile">
+      <div class="text-3xl mb-2">📋</div>
+      <h3 class="font-bold text-trust-800 text-sm mb-1">Próximo paso</h3>
+      <p class="text-xs text-slate-600">Reunión técnica con el equipo del
+         Ministerio de Sanidad y Bienestar Social para revisar esta propuesta
+         y definir el alcance del acuerdo gubernamental.</p>
+    </div>
+    <div class="card p-5 text-center border-blue-200 bg-blue-50">
+      <div class="text-3xl mb-2">🔬</div>
+      <h3 class="font-bold text-blue-800 text-sm mb-1">Demostración técnica</h3>
+      <p class="text-xs text-slate-600">Presentación del sistema en funcionamiento
+         real, incluyendo el canal de seguridad farmacológica, la auditoría
+         criptográfica y la operación offline completa.</p>
+    </div>
+    <div class="card p-5 text-center border-purple-200 bg-purple-50">
+      <div class="text-3xl mb-2">🤝</div>
+      <h3 class="font-bold text-purple-800 text-sm mb-1">Contacto</h3>
+      <p class="text-xs text-slate-600">
+        STARGA, Inc.<br>
+        <a href="mailto:info@star.ga" class="text-trust-600 hover:underline">info@star.ga</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+  </main><!-- /main -->
+</div><!-- /layout -->
+
+<!-- ═══════════════════════════════════════════════════════════ FOOTER -->
+<footer class="mt-16 border-t border-slate-200 bg-white">
+  <div class="max-w-7xl mx-auto px-4 py-8 sm:py-10">
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <svg viewBox="0 0 32 32" class="h-7 w-7 flex-shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="32" height="32" rx="8" fill="#0F766E"/>
+          <path d="M9 16h14M16 9v14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <div class="font-bold text-slate-900 text-sm">Historia Clínica</div>
+          <div class="text-xs text-slate-500">STARGA, Inc. · Documento de propuesta · Guinea Ecuatorial</div>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-4 text-xs text-slate-500">
+        <a href="demo.html" class="hover:text-trust-700 transition-colors">← Demo en vivo</a>
+        <span class="text-slate-300 hidden sm:inline">|</span>
+        <a href="mailto:info@star.ga" class="hover:text-trust-700 transition-colors">info@star.ga</a>
+        <span class="text-slate-300 hidden sm:inline">|</span>
+        <span>© 2026 STARGA, Inc.</span>
+      </div>
+    </div>
+    <div class="mt-5 pt-5 border-t border-slate-100 text-center text-xs text-slate-400 max-w-2xl mx-auto">
+      Este documento es una propuesta institucional destinada a las autoridades sanitarias
+      de la República de Guinea Ecuatorial. No constituye un compromiso contractual.
+    </div>
+  </div>
+</footer>
+
+<!-- ═══════════════════════════════════════════════════════════ JS: Mobile nav + TOC highlight -->
+<script>
+(function() {
+  // Mobile nav toggle
+  var btn = document.getElementById('nav-hamburger');
+  var menu = document.getElementById('mobile-nav');
+  if (btn && menu) {
+    btn.addEventListener('click', function() {
+      var open = menu.classList.toggle('hidden');
+      btn.setAttribute('aria-expanded', String(!open));
+    });
+  }
+
+  // TOC active highlight via IntersectionObserver
+  var tocLinks = document.querySelectorAll('.toc-link');
+  if (tocLinks.length && 'IntersectionObserver' in window) {
+    var sectionIds = Array.from(tocLinks).map(function(a) {
+      return a.getAttribute('href').slice(1);
+    });
+    var currentActive = null;
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          var id = entry.target.id;
+          if (currentActive) currentActive.classList.remove('active');
+          var link = document.querySelector('.toc-link[href="#' + id + '"]');
+          if (link) { link.classList.add('active'); currentActive = link; }
+        }
+      });
+    }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+
+    sectionIds.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+  }
+})();
+</script>
+
+</body>
+</html>
